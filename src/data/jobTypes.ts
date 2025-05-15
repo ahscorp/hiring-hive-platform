@@ -47,9 +47,12 @@ export interface ApplicationForm {
   currentCompany: string;
   currentDesignation: string;
   currentCTC: string;
+  currentTakeHome: string;
   expectedCTC: string;
   noticePeriod: string;
   location: string;
+  department: string;
+  otherDepartment: string;
   resume: File | null;
   jobId: string;
 }

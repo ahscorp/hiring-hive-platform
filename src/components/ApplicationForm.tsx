@@ -14,7 +14,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { ApplicationForm as ApplicationFormType, Job } from "@/data/jobTypes";
 import { useToast } from "@/hooks/use-toast";
 import { jobs } from "@/data/mockData";
-import { Upload, X } from "lucide-react";
+import { Upload, X, FilePdf, FileText } from "lucide-react";
+import { 
+  RadioGroup, 
+  RadioGroupItem 
+} from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ApplicationFormProps {
   isOpen: boolean;
@@ -30,12 +41,29 @@ const initialFormData: ApplicationFormType = {
   currentCompany: "",
   currentDesignation: "",
   currentCTC: "",
+  currentTakeHome: "",
   expectedCTC: "",
   noticePeriod: "",
   location: "",
+  department: "",
+  otherDepartment: "",
   resume: null,
   jobId: "",
 };
+
+const departments = [
+  "Human Resources",
+  "Account & Finance",
+  "Sales & Marketing",
+  "Information Technology",
+  "Operations",
+  "Customer Service",
+  "Production",
+  "Supply Chain",
+  "Quality",
+  "Administration",
+  "Other"
+];
 
 const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
   const [formData, setFormData] = useState<ApplicationFormType>({
@@ -58,14 +86,25 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     });
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setFileError(null);
     
     if (file) {
-      // Check file type
-      if (file.type !== 'application/pdf') {
-        setFileError('Please upload a PDF file');
+      // Check file type - now accepting PDF and DOC/DOCX
+      if (
+        file.type !== 'application/pdf' && 
+        file.type !== 'application/msword' && 
+        file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ) {
+        setFileError('Please upload a PDF or Word document');
         return;
       }
       
@@ -96,7 +135,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     // Validate required fields
     const requiredFields = [
       'fullName', 'email', 'phone', 'yearsOfExperience', 
-      'currentCompany', 'expectedCTC', 'location'
+      'currentCompany', 'expectedCTC', 'location', 'department'
     ] as const;
     
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -105,6 +144,16 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       toast({
         title: "Missing Information",
         description: `Please fill in all required fields`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if "Other" department is selected but no description provided
+    if (formData.department === "Other" && !formData.otherDepartment) {
+      toast({
+        title: "Missing Information",
+        description: "Please specify the other department",
         variant: "destructive",
       });
       return;
@@ -136,6 +185,16 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       setIsSubmitting(false);
       onClose();
     }, 1500);
+  };
+
+  const getFileIcon = () => {
+    if (!formData.resume) return null;
+    
+    if (formData.resume.type === 'application/pdf') {
+      return <FilePdf className="h-5 w-5 mr-2" />;
+    } else {
+      return <FileText className="h-5 w-5 mr-2" />;
+    }
   };
 
   return (
@@ -238,13 +297,24 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="currentCTC">Current CTC</Label>
+                <Label htmlFor="currentCTC">Current CTC (per annum)</Label>
                 <Input
                   id="currentCTC"
                   name="currentCTC"
                   value={formData.currentCTC}
                   onChange={handleInputChange}
                   placeholder="e.g. 10 LPA"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="currentTakeHome">Current Take Home (per month)</Label>
+                <Input
+                  id="currentTakeHome"
+                  name="currentTakeHome"
+                  type="number"
+                  value={formData.currentTakeHome}
+                  onChange={handleInputChange}
+                  placeholder="Enter amount"
                 />
               </div>
               <div className="space-y-2">
@@ -257,6 +327,37 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
                   placeholder="e.g. 15 LPA"
                 />
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
+                <Select 
+                  value={formData.department}
+                  onValueChange={(value) => handleSelectChange("department", value)}
+                >
+                  <SelectTrigger id="department">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((department) => (
+                      <SelectItem key={department} value={department}>
+                        {department}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {formData.department === "Other" && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="otherDepartment">Please specify department <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="otherDepartment"
+                    name="otherDepartment"
+                    value={formData.otherDepartment}
+                    onChange={handleInputChange}
+                    placeholder="Enter department name"
+                  />
+                </div>
+              )}
             </div>
           </div>
           
@@ -271,11 +372,12 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
                       <p className="mb-2 text-sm text-gray-500">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                       </p>
-                      <p className="text-xs text-gray-500">PDF (MAX. 3MB)</p>
+                      <p className="text-xs text-gray-500">PDF or DOC/DOCX (MAX. 3MB)</p>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between w-full px-4">
                       <div className="flex items-center">
+                        {getFileIcon()}
                         <span className="text-sm font-medium text-gray-700">
                           {formData.resume.name}
                         </span>
@@ -297,7 +399,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
                     id="resume"
                     name="resume"
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     onChange={handleFileChange}
                     className="hidden"
                   />
@@ -307,7 +409,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
                 <p className="text-sm text-red-500 mt-1">{fileError}</p>
               )}
               <p className="text-xs text-gray-500">
-                Only PDF files are accepted, maximum size 3MB
+                PDF or Word documents accepted, maximum size 3MB
               </p>
             </div>
           </div>

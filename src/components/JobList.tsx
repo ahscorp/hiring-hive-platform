@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { Job } from "@/data/jobTypes";
 import JobCard from "./JobCard";
-import { jobs as mockJobs } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
@@ -17,16 +16,12 @@ const JobList = ({
   onApply,
   isLoading
 }: JobListProps) => {
-  const [displayCount, setDisplayCount] = useState(4);
+  const [displayCount, setDisplayCount] = useState(6); // Increased from 4 to 6 for better grid display
   
   // Reset display count when filters change
   useEffect(() => {
-    setDisplayCount(4);
+    setDisplayCount(6);
   }, [filteredJobs]);
-  
-  const loadMore = () => {
-    setDisplayCount(prev => prev + 4);
-  };
   
   if (isLoading) {
     return (
@@ -60,7 +55,7 @@ const JobList = ({
         </p>
       </div>
       
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredJobs.slice(0, displayCount).map((job) => (
           <JobCard key={job.id} job={job} onApply={onApply} />
         ))}
@@ -69,7 +64,7 @@ const JobList = ({
       {displayCount < filteredJobs.length && (
         <div className="mt-6 text-center">
           <Button 
-            onClick={loadMore}
+            onClick={() => setDisplayCount(prev => prev + 6)}
             variant="outline"
             className="px-8"
           >
