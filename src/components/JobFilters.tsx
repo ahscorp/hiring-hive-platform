@@ -67,7 +67,7 @@ const JobFilters = ({
               <SelectValue placeholder="All Industries" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Industries</SelectItem>
+              <SelectItem value="all-industries">All Industries</SelectItem>
               {industries.map((industry) => (
                 <SelectItem key={industry.id} value={industry.id}>
                   {industry.name}
@@ -81,13 +81,13 @@ const JobFilters = ({
           <Label htmlFor="location-filter">Location</Label>
           <Select 
             value={selectedLocation || ""} 
-            onValueChange={(value) => setSelectedLocation(value || null)}
+            onValueChange={(value) => setSelectedLocation(value === "all-locations" ? null : value)}
           >
             <SelectTrigger id="location-filter">
               <SelectValue placeholder="All Locations" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Locations</SelectItem>
+              <SelectItem value="all-locations">All Locations</SelectItem>
               {locations.map((location) => (
                 <SelectItem key={location.id} value={location.id}>
                   {location.city}, {location.state}
@@ -101,13 +101,13 @@ const JobFilters = ({
           <Label htmlFor="experience-filter">Experience</Label>
           <Select 
             value={selectedExperience || ""} 
-            onValueChange={(value) => setSelectedExperience(value || null)}
+            onValueChange={(value) => setSelectedExperience(value === "any-experience" ? null : value)}
           >
             <SelectTrigger id="experience-filter">
               <SelectValue placeholder="Any Experience" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Experience</SelectItem>
+              <SelectItem value="any-experience">Any Experience</SelectItem>
               {experienceRanges.map((exp) => (
                 <SelectItem key={exp.id} value={exp.id}>
                   {exp.range}
@@ -121,13 +121,13 @@ const JobFilters = ({
           <Label htmlFor="salary-filter">Salary Range</Label>
           <Select 
             value={selectedSalary || ""} 
-            onValueChange={(value) => setSelectedSalary(value || null)}
+            onValueChange={(value) => setSelectedSalary(value === "any-salary" ? null : value)}
           >
             <SelectTrigger id="salary-filter">
               <SelectValue placeholder="Any Salary" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Salary</SelectItem>
+              <SelectItem value="any-salary">Any Salary</SelectItem>
               {salaryRanges.map((salary) => (
                 <SelectItem key={salary.id} value={salary.id}>
                   {salary.range}
