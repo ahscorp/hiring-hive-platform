@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Job } from "@/data/jobTypes";
 import { ArrowRight, Briefcase, Calendar, MapPin, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import JobDetailsDialog from "./JobDetailsDialog";
 
 interface JobCardProps {
   job: Job;
@@ -12,7 +13,7 @@ interface JobCardProps {
 }
 
 const JobCard = ({ job, onApply }: JobCardProps) => {
-  const [expanded, setExpanded] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -68,20 +69,14 @@ const JobCard = ({ job, onApply }: JobCardProps) => {
         )}
       </div>
 
-      {expanded && (
-        <div className="mt-2 border-t pt-3 text-sm">
-          <p className="text-gray-700 mb-2">{job.description.substring(0, 120)}...</p>
-        </div>
-      )}
-
       <div className="mt-auto pt-3 flex justify-between items-center border-t">
         <Button 
           variant="ghost" 
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => setDetailsOpen(true)}
           size="sm"
           className="text-xs h-8"
         >
-          {expanded ? "View Less" : "View More"}
+          View More
         </Button>
         <Button 
           onClick={() => onApply(job.id)}
@@ -90,6 +85,12 @@ const JobCard = ({ job, onApply }: JobCardProps) => {
           Apply <ArrowRight className="ml-1 h-3 w-3" />
         </Button>
       </div>
+
+      <JobDetailsDialog 
+        job={job}
+        isOpen={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+      />
     </div>
   );
 };
