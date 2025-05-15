@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Dialog, 
@@ -14,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ApplicationForm as ApplicationFormType, Job } from "@/data/jobTypes";
 import { useToast } from "@/hooks/use-toast";
 import { jobs } from "@/data/mockData";
-import { Upload, X, FilePdf, FileText } from "lucide-react";
+import { Upload, X, FileText } from "lucide-react";
 import { 
   RadioGroup, 
   RadioGroupItem 
@@ -191,7 +190,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     if (!formData.resume) return null;
     
     if (formData.resume.type === 'application/pdf') {
-      return <FilePdf className="h-5 w-5 mr-2" />;
+      return <FileText className="h-5 w-5 mr-2" />;
     } else {
       return <FileText className="h-5 w-5 mr-2" />;
     }
