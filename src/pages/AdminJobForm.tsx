@@ -99,15 +99,13 @@ const AdminJobForm: React.FC = () => {
         .from('jobs')
         .insert([
           {
-            title: values.title,
+            position: values.title, // Map title to position
             location: locationObj ? JSON.stringify(locationObj) : null,
             experience: experienceObj ? JSON.stringify(experienceObj) : null,
             industry: industryObj ? JSON.stringify(industryObj) : null,
-            department: values.department,
-            keyskills: [],
+            jobId: values.department, // Map department to jobId
+            keyskills: values.responsibilities.split('\n'), // Use for both keyskills and responsibilities
             description: values.description,
-            responsibilities: values.responsibilities.split('\n'),
-            salaryrange: salaryRangeObj ? JSON.stringify(salaryRangeObj) : null,
             status: values.status ? 'Published' : 'Draft',
             dateposted: new Date().toISOString(),
           },

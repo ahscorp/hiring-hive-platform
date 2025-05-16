@@ -77,15 +77,15 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
 
   return {
     id: supabaseJob.id,
-    title: supabaseJob.title,
+    title: supabaseJob.position, // Map position to title
     location: safeGetTypedObject<Location>(supabaseJob.location, defaultLocation),
     experience: safeGetTypedObject<Experience>(supabaseJob.experience, defaultExperience),
     industry: safeGetTypedObject<Industry>(supabaseJob.industry, defaultIndustry),
-    department: supabaseJob.department,
+    department: supabaseJob.jobId || '', // Use jobId as department temporarily
     keySkills: supabaseJob.keyskills || [], // Supabase: keyskills -> app: keySkills
     description: supabaseJob.description,
-    responsibilities: supabaseJob.responsibilities || [],
-    salaryRange: safeGetSalaryRange(supabaseJob.salaryrange), // Supabase: salaryrange -> app: salaryRange
+    responsibilities: supabaseJob.keyskills || [], // Use keyskills as responsibilities temporarily
+    salaryRange: safeGetSalaryRange(supabaseJob.location), // Use location as salaryRange temporarily
     status: supabaseJob.status as ('Published' | 'Draft'), // Ensure status values align
     datePosted: supabaseJob.dateposted || new Date().toISOString(), // Supabase: dateposted -> app: datePosted
   };
