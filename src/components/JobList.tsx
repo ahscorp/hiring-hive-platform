@@ -16,7 +16,7 @@ const JobList = ({
   onApply,
   isLoading
 }: JobListProps) => {
-  const [displayCount, setDisplayCount] = useState(6); // Increased from 4 to 6 for better grid display
+  const [displayCount, setDisplayCount] = useState(6);
   
   // Reset display count when filters change
   useEffect(() => {
@@ -31,7 +31,7 @@ const JobList = ({
     );
   }
   
-  if (filteredJobs.length === 0) {
+  if (!filteredJobs || filteredJobs.length === 0) {
     return (
       <div className="text-center py-16 bg-white rounded-lg shadow-md">
         <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
