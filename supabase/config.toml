@@ -1,1 +1,6 @@
+
+# This is the project configuration for Supabase Functions
 project_id = "pzmobambhlrawwvlnwwb"
+
+[functions.create-storage-bucket]
+verify_jwt = true

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Tables, Json } from "@/integrations/supabase/types"; 
@@ -47,7 +46,7 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
     location: safeGetTypedObject<Location>(supabaseJob.location, defaultLocation),
     experience: safeGetTypedObject<Experience>(supabaseJob.experience, defaultExperience),
     industry: safeGetTypedObject<Industry>(supabaseJob.industry, defaultIndustry),
-    department: supabaseJob.jobId || '',
+    department: supabaseJob.jobId || '',  // Use jobId as department field
     keySkills: supabaseJob.keyskills || [],
     description: supabaseJob.description,
     responsibilities: supabaseJob.keyskills || [], // Use keyskills as responsibilities temporarily

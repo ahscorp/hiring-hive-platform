@@ -2,16 +2,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Plus, Trash } from "lucide-react";
+import { Eye, Pencil, Plus, Trash, FileText, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Job, Location, Experience, Industry, SalaryRange } from "@/data/jobTypes"; // Import all necessary types
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
 import { Tables, Json } from "@/integrations/supabase/types"; // Import Supabase types
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Type for a job row directly from Supabase
 type SupabaseJobRow = Tables<'jobs'>;
+
+// Type for an application from Supabase
+type Application = Tables<'applications'>;
 
 // Mapping function from SupabaseJobRow to our application's Job type (similar to Index.tsx)
 const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
@@ -44,7 +53,7 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
     location: safeGetTypedObject<Location>(supabaseJob.location, defaultLocation),
     experience: safeGetTypedObject<Experience>(supabaseJob.experience, defaultExperience),
     industry: safeGetTypedObject<Industry>(supabaseJob.industry, defaultIndustry),
-    department: supabaseJob.jobId || '', // Use jobId as department temporarily
+    department: supabaseJob.jobId || '', // Use jobId as department
     keySkills: supabaseJob.keyskills || [],
     description: supabaseJob.description,
     responsibilities: supabaseJob.keyskills || [], // Use keyskills as responsibilities temporarily  
@@ -59,7 +68,9 @@ const Admin = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth(); // Get logout function and user from context
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [applications, setApplications] = useState<Record<string, Application[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(false);
 
   useEffect(() => {
     // Auth is handled by ProtectedRoute, user object from useAuth indicates logged-in state
@@ -79,12 +90,48 @@ const Admin = () => {
         } else {
           const mappedJobs = supabaseData ? supabaseData.map(mapSupabaseJobToAppJob) : [];
           setJobs(mappedJobs);
+          
+          // Fetch applications for each job
+          await fetchApplicationsForJobs(supabaseData?.map(job => job.id) || []);
         }
         setIsLoading(false);
       };
       fetchJobs();
     }
   }, [user]); // Re-fetch if user changes (e.g., on logout, though ProtectedRoute handles redirect)
+
+  const fetchApplicationsForJobs = async (jobIds: string[]) => {
+    if (jobIds.length === 0) return;
+    
+    setIsLoadingApplications(true);
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .in('job_id', jobIds);
+      
+      if (error) {
+        console.error("Error fetching applications:", error);
+        toast({ title: "Error", description: "Failed to fetch applications.", variant: "destructive" });
+      } else {
+        // Group applications by job_id
+        const appsByJob: Record<string, Application[]> = {};
+        data?.forEach(app => {
+          const jobId = app.job_id || '';
+          if (!appsByJob[jobId]) {
+            appsByJob[jobId] = [];
+          }
+          appsByJob[jobId].push(app);
+        });
+        
+        setApplications(appsByJob);
+      }
+    } catch (err) {
+      console.error("Exception fetching applications:", err);
+    } finally {
+      setIsLoadingApplications(false);
+    }
+  };
 
   const handleLogout = async () => {
     const { error } = await logout();
@@ -141,6 +188,41 @@ const Admin = () => {
     setIsLoading(false);
   };
 
+  // Mark application as processed
+  const toggleApplicationProcessed = async (appId: string, currentValue: boolean | null) => {
+    const newValue = !currentValue;
+    
+    const { error } = await supabase
+      .from('applications')
+      .update({ processed: newValue })
+      .eq('id', appId);
+      
+    if (error) {
+      toast({ 
+        title: "Error", 
+        description: `Failed to update application status: ${error.message}`, 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    // Update local state
+    setApplications(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(jobId => {
+        updated[jobId] = updated[jobId].map(app => 
+          app.id === appId ? { ...app, processed: newValue } : app
+        );
+      });
+      return updated;
+    });
+    
+    toast({
+      title: "Application updated",
+      description: `Application marked as ${newValue ? 'processed' : 'unprocessed'}`,
+    });
+  };
+
   // ProtectedRoute handles unauthorized access, so no need for !isAuthorized check here
   // If user is null and loading is false, ProtectedRoute would have redirected.
   // We might still want a loading state for the initial job fetch if user is present.
@@ -176,38 +258,41 @@ const Admin = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-3 text-left font-medium">ID</th>
-                    <th className="py-3 text-left font-medium">Title</th>
-                    <th className="py-3 text-left font-medium">Location</th>
-                    <th className="py-3 text-left font-medium">Date Posted</th>
-                    <th className="py-3 text-left font-medium">Status</th>
-                    <th className="py-3 text-right font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobs.map(job => (
-                    <tr key={job.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3">{job.id}</td>
-                      <td className="py-3">{job.title}</td>
-                      <td className="py-3">{job.location.city}, {job.location.state}</td>
-                      <td className="py-3">{new Date(job.datePosted).toLocaleDateString()}</td>
-                      <td className="py-3">
-                        <Badge 
-                          variant={job.status === 'Published' ? 'default' : 'secondary'}
-                          className="cursor-pointer"
-                          onClick={() => handleStatusChange(
-                            job.id, 
-                            job.status === 'Published' ? 'Draft' : 'Published'
-                          )}
-                        >
-                          {job.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3 text-right">
-                        <div className="flex justify-end gap-2">
+              <Accordion type="single" collapsible className="w-full">
+                {jobs.map(job => (
+                  <AccordionItem key={job.id} value={job.id}>
+                    <div className="border-b hover:bg-gray-50">
+                      <div className="flex items-center">
+                        <AccordionTrigger className="py-3 flex-grow">
+                          <div className="grid grid-cols-5 w-full text-left">
+                            <div className="truncate">{job.department || 'N/A'}</div>
+                            <div className="truncate">{job.title}</div>
+                            <div className="truncate">{job.location.city}, {job.location.state}</div>
+                            <div>{new Date(job.datePosted).toLocaleDateString()}</div>
+                            <div>
+                              <Badge 
+                                variant={job.status === 'Published' ? 'default' : 'secondary'}
+                                className="cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusChange(
+                                    job.id, 
+                                    job.status === 'Published' ? 'Draft' : 'Published'
+                                  );
+                                }}
+                              >
+                                {job.status}
+                              </Badge>
+                              {applications[job.id]?.length > 0 && (
+                                <Badge variant="outline" className="ml-2">
+                                  <User className="h-3 w-3 mr-1" /> 
+                                  {applications[job.id].length}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <div className="flex gap-2 pr-4">
                           <Button variant="ghost" size="icon">
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -222,11 +307,78 @@ const Admin = () => {
                             <Trash className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                      
+                      <AccordionContent>
+                        <div className="pt-3 pb-6">
+                          <h3 className="font-medium mb-3">Applications</h3>
+                          
+                          {isLoadingApplications ? (
+                            <div className="py-4 flex justify-center">
+                              <div className="animate-spin h-5 w-5 border-2 border-hragency-blue border-t-transparent rounded-full"></div>
+                            </div>
+                          ) : applications[job.id]?.length > 0 ? (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="bg-gray-100">
+                                    <th className="px-2 py-2 text-left">Name</th>
+                                    <th className="px-2 py-2 text-left">Email</th>
+                                    <th className="px-2 py-2 text-left">Phone</th>
+                                    <th className="px-2 py-2 text-left">Location</th>
+                                    <th className="px-2 py-2 text-left">Experience</th>
+                                    <th className="px-2 py-2 text-left">Department</th>
+                                    <th className="px-2 py-2 text-left">Status</th>
+                                    <th className="px-2 py-2 text-left">Resume</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {applications[job.id].map(app => (
+                                    <tr key={app.id} className="border-t hover:bg-gray-50">
+                                      <td className="px-2 py-2">{app.fullname}</td>
+                                      <td className="px-2 py-2">{app.email}</td>
+                                      <td className="px-2 py-2">{app.phone}</td>
+                                      <td className="px-2 py-2">{app.location}</td>
+                                      <td className="px-2 py-2">{app.yearsofexperience}</td>
+                                      <td className="px-2 py-2">{app.department}</td>
+                                      <td className="px-2 py-2">
+                                        <Badge 
+                                          variant={app.processed ? "success" : "secondary"}
+                                          className="cursor-pointer"
+                                          onClick={() => toggleApplicationProcessed(app.id, app.processed)}
+                                        >
+                                          {app.processed ? "Processed" : "New"}
+                                        </Badge>
+                                      </td>
+                                      <td className="px-2 py-2">
+                                        {app.resume_url ? (
+                                          <a 
+                                            href={`${supabase.storage.from('resumes').getPublicUrl(app.resume_url).data.publicUrl}`} 
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center text-hragency-blue hover:underline"
+                                          >
+                                            <FileText className="h-4 w-4 mr-1" />
+                                            View
+                                          </a>
+                                        ) : (
+                                          <span className="text-gray-400">No resume</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 italic">No applications for this job yet</p>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </div>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           )}
         </div>

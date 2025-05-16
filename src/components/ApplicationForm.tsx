@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Dialog, 
@@ -25,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ApplicationFormProps {
   isOpen: boolean;
@@ -169,10 +171,83 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     
     setIsSubmitting(true);
     
-    // Simulate API call with timeout
-    setTimeout(() => {
-      // Log the form data for now (in a real app, this would be sent to an API)
-      console.log('Application submitted:', formData);
+    try {
+      // 1. First, prepare data for Google Apps Script submission
+      const formDataToSubmit = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'resume') {
+          formDataToSubmit.append(key, value?.toString() || '');
+        }
+      });
+      
+      if (formData.resume) {
+        formDataToSubmit.append('resume', formData.resume);
+      }
+      
+      // 2. Submit to Google Apps Script
+      const googleScriptUrl = "https://script.google.com/macros/s/AKfycbw1zqQG506KywnsWPsRWn2AvE2W03YXZk39p6Sg1V6YCUu1u-QaIGwSViQPQ-G3yvAImg/exec";
+      
+      const response = await fetch(googleScriptUrl, {
+        method: 'POST',
+        body: formDataToSubmit,
+        mode: 'no-cors' // Google Apps Script typically requires no-cors mode
+      });
+      
+      // 3. Upload resume to Supabase Storage
+      let resumeUrl = null;
+      if (formData.resume) {
+        const fileExt = formData.resume.name.split('.').pop();
+        const filePath = `${jobId}/${formData.fullName.replace(/\s+/g, '_')}_${Date.now()}.${fileExt}`;
+        
+        const { data: fileData, error: uploadError } = await supabase
+          .storage
+          .from('resumes')
+          .upload(filePath, formData.resume);
+          
+        if (uploadError) {
+          console.error('Error uploading resume:', uploadError);
+          toast({
+            title: "Upload Error",
+            description: "Failed to upload resume. Your application was still submitted.",
+            variant: "destructive",
+          });
+        } else {
+          resumeUrl = fileData.path;
+        }
+      }
+      
+      // 4. Store application data in Supabase
+      const { error: dbError } = await supabase
+        .from('applications')
+        .insert({
+          job_id: jobId,
+          fullname: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          yearsofexperience: formData.yearsOfExperience,
+          currentcompany: formData.currentCompany,
+          currentdesignation: formData.currentDesignation || null,
+          currentctc: formData.currentCTC || null,
+          currenttakehome: formData.currentTakeHome || null,
+          expectedctc: formData.expectedCTC,
+          noticeperiod: formData.noticePeriod || null,
+          location: formData.location,
+          department: formData.department,
+          otherdepartment: formData.department === "Other" ? formData.otherDepartment : null,
+          resume_url: resumeUrl,
+          processed: false
+        });
+        
+      if (dbError) {
+        console.error('Error saving application to database:', dbError);
+        toast({
+          title: "Database Error",
+          description: "Failed to save your application details. Please try again.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
       
       toast({
         title: "Application Submitted!",
@@ -183,7 +258,16 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       setFormData(initialFormData);
       setIsSubmitting(false);
       onClose();
-    }, 1500);
+      
+    } catch (error) {
+      console.error('Application submission error:', error);
+      toast({
+        title: "Submission Error",
+        description: "An error occurred while submitting your application. Please try again.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   };
 
   const getFileIcon = () => {
@@ -201,7 +285,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Apply for {job?.title}</DialogTitle>
-          <p className="text-sm text-muted-foreground mt-2">Job ID: {jobId}</p>
+          <p className="text-sm text-muted-foreground mt-2">Job ID: {job?.department || jobId}</p>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
