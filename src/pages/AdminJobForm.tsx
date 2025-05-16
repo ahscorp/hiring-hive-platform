@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
@@ -29,11 +30,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
-  title: z.string().min(2, {
+  position: z.string().min(2, {
     message: "Job title must be at least 2 characters.",
   }),
-  department: z.string().min(2, {
-    message: "Department must be at least 2 characters.",
+  jobId: z.string().min(2, {
+    message: "Job ID must be at least 2 characters.",
   }),
   location: z.string().min(2, {
     message: "Please select a location.",
@@ -44,14 +45,11 @@ const formSchema = z.object({
   industry: z.string().min(2, {
     message: "Please select an industry.",
   }),
-  salaryRange: z.string().min(2, {
-    message: "Please select a salary range.",
-  }),
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
   }),
-  responsibilities: z.string().min(10, {
-    message: "Responsibilities must be at least 10 characters.",
+  keySkills: z.string().min(10, {
+    message: "Key skills must be at least 10 characters.",
   }),
   status: z.boolean().default(false),
 });
@@ -65,14 +63,13 @@ const AdminJobForm: React.FC = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      department: "",
+      position: "",
+      jobId: "",
       location: "",
       experience: "",
       industry: "",
-      salaryRange: "",
       description: "",
-      responsibilities: "",
+      keySkills: "",
       status: false,
     },
   });
@@ -92,22 +89,22 @@ const AdminJobForm: React.FC = () => {
     const locationObj = locations.find((l) => l.id === values.location) || locations[0];
     const experienceObj = experienceRanges.find((e) => e.id === values.experience) || experienceRanges[0];
     const industryObj = industries.find((i) => i.id === values.industry) || industries[0];
-    const salaryRangeObj = salaryRanges.find((s) => s.id === values.salaryRange) || salaryRanges[0];
 
     try {
       const { data, error } = await supabase
         .from('jobs')
         .insert([
           {
-            position: values.title, // Map title to position
-            location: locationObj ? JSON.stringify(locationObj) : null,
-            experience: experienceObj ? JSON.stringify(experienceObj) : null,
-            industry: industryObj ? JSON.stringify(industryObj) : null,
-            jobId: values.department, // Map department to jobId
-            keyskills: values.responsibilities.split('\n'), // Use for both keyskills and responsibilities
+            position: values.position,
+            jobId: values.jobId,
+            location: JSON.stringify(locationObj),
+            experience: JSON.stringify(experienceObj),
+            industry: JSON.stringify(industryObj),
             description: values.description,
+            keyskills: values.keySkills.split('\n'),
             status: values.status ? 'Published' : 'Draft',
             dateposted: new Date().toISOString(),
+            user_id: user.id,
           },
         ]);
 
@@ -148,12 +145,12 @@ const AdminJobForm: React.FC = () => {
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="title"
+              name="position"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Position</FormLabel>
                   <FormControl>
-                    <Input placeholder="Job Title" {...field} />
+                    <Input placeholder="Job Position" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -161,12 +158,12 @@ const AdminJobForm: React.FC = () => {
             />
             <FormField
               control={form.control}
-              name="department"
+              name="jobId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Department</FormLabel>
+                  <FormLabel>Job ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="Department" {...field} />
+                    <Input placeholder="Job ID or Department" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -240,28 +237,6 @@ const AdminJobForm: React.FC = () => {
             />
             <FormField
               control={form.control}
-              name="salaryRange"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Salary Range</FormLabel>
-                  <Select onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a salary range" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {salaryRanges.map((salaryRange) => (
-                        <SelectItem key={salaryRange.id} value={salaryRange.id}>{salaryRange.range}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -275,12 +250,12 @@ const AdminJobForm: React.FC = () => {
             />
             <FormField
               control={form.control}
-              name="responsibilities"
+              name="keySkills"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Responsibilities</FormLabel>
+                  <FormLabel>Key Skills</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Job Responsibilities (one per line)" {...field} />
+                    <Textarea placeholder="Key Skills (one per line)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

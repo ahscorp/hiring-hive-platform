@@ -1,13 +1,23 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ProtectedRoute: React.FC = () => {
   const { user, loading } = useAuth();
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
-  if (loading) {
-    // You can return a loading spinner here if you want
-    return <div>Loading...</div>;
+  useEffect(() => {
+    if (!loading) {
+      setIsAuthChecked(true);
+    }
+  }, [loading]);
+
+  // Only make decisions after we've checked auth state
+  if (!isAuthChecked) {
+    return <div className="min-h-screen flex justify-center items-center">
+      <div className="animate-spin h-8 w-8 border-4 border-hragency-blue border-t-transparent rounded-full"></div>
+    </div>;
   }
 
   if (!user) {
