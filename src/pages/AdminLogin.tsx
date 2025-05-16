@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,35 +9,35 @@ import { useToast } from "@/hooks/use-toast";
 import { Briefcase } from "lucide-react";
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState(""); // Changed username to email
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, user, loading: authLoading } = useAuth(); // Use auth context
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  useEffect(() => {
+    if (user) {
+      navigate("/admin"); // Redirect if already logged in
+    }
+  }, [user, navigate]);
 
-    // Mock login logic - replace with actual authentication
-    setTimeout(() => {
-      if (username === "admin" && password === "admin") {
-        // Store auth state in sessionStorage
-        sessionStorage.setItem("isAdminLoggedIn", "true");
-        toast({
-          title: "Login successful",
-          description: "Welcome to the admin panel",
-        });
-        navigate("/admin");
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Invalid username or password",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await login(email, password);
+
+    if (error) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Login successful",
+        description: "Welcome to the admin panel",
+      });
+      navigate("/admin"); // Navigate on successful login from context
+    }
   };
 
   return (
@@ -57,14 +58,15 @@ const AdminLogin = () => {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label> {/* Changed username to email */}
               <Input
-                id="username"
-                name="username"
-                type="text"
+                id="email"
+                name="email"
+                type="email" // Changed type to email
+                autoComplete="email"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -93,17 +95,12 @@ const AdminLogin = () => {
           <Button
             type="submit"
             className="w-full bg-hragency-blue hover:bg-hragency-blue/90"
-            disabled={isLoading}
+            disabled={authLoading} // Use authLoading from context
           >
-            {isLoading ? "Signing in..." : "Sign in"}
+            {authLoading ? "Signing in..." : "Sign in"}
           </Button>
 
-          <div className="text-center text-sm">
-            <p className="text-gray-600">
-              For demo, use: username: <span className="font-medium">admin</span> / 
-              password: <span className="font-medium">admin</span>
-            </p>
-          </div>
+          {/* Removed demo credentials as we are using real auth */}
         </form>
       </div>
     </div>
