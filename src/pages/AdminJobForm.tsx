@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,14 +17,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import {
   industries,
   locations,
   experienceRanges,
-  salaryRanges,
 } from "@/data/mockData";
-import { Job } from '@/data/jobTypes';
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,9 +53,26 @@ const formSchema = z.object({
 
 const AdminJobForm: React.FC = () => {
   const navigate = useNavigate();
-  const { toast } = useToast()
+  const { toast } = useToast();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check if user is authenticated on component mount
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      
+      if (data && data.session) {
+        setIsAuthenticated(true);
+      } else {
+        // Redirect only once to avoid infinite loop
+        navigate('/admin/login');
+      }
+    };
+    
+    checkAuth();
+  }, [navigate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -75,8 +89,6 @@ const AdminJobForm: React.FC = () => {
   });
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-
     if (!user) {
       toast({
         title: "Not authenticated",
@@ -86,53 +98,59 @@ const AdminJobForm: React.FC = () => {
       return;
     }
 
-    const locationObj = locations.find((l) => l.id === values.location) || locations[0];
-    const experienceObj = experienceRanges.find((e) => e.id === values.experience) || experienceRanges[0];
-    const industryObj = industries.find((i) => i.id === values.industry) || industries[0];
+    setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
+      const locationObj = locations.find((l) => l.id === values.location) || locations[0];
+      const experienceObj = experienceRanges.find((e) => e.id === values.experience) || experienceRanges[0];
+      const industryObj = industries.find((i) => i.id === values.industry) || industries[0];
+
+      // Create job object with the right structure that matches your Supabase table
+      const jobData = {
+        position: values.position,
+        jobId: values.jobId,
+        location: locationObj,
+        experience: experienceObj,
+        industry: industryObj,
+        description: values.description,
+        keyskills: values.keySkills.split('\n'),
+        status: values.status ? 'Published' : 'Draft',
+        dateposted: new Date().toISOString(),
+        user_id: user.id,
+      };
+
+      const { error } = await supabase
         .from('jobs')
-        .insert([
-          {
-            position: values.position,
-            jobId: values.jobId,
-            location: JSON.stringify(locationObj),
-            experience: JSON.stringify(experienceObj),
-            industry: JSON.stringify(industryObj),
-            description: values.description,
-            keyskills: values.keySkills.split('\n'),
-            status: values.status ? 'Published' : 'Draft',
-            dateposted: new Date().toISOString(),
-            user_id: user.id,
-          },
-        ]);
+        .insert(jobData);
 
       if (error) {
-        console.error("Error creating job:", error);
-        toast({
-          title: "Error creating job",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Job created",
-          description: "Job created successfully.",
-        });
-        navigate('/admin');
+        throw error;
       }
-    } catch (error) {
+
+      toast({
+        title: "Job created",
+        description: "Job created successfully.",
+      });
+      navigate('/admin');
+    } catch (error: any) {
       console.error("Error creating job:", error);
       toast({
         title: "Error creating job",
-        description: "Failed to create job.",
+        description: error.message || "Failed to create job.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="animate-spin h-8 w-8 border-4 border-hragency-blue border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
