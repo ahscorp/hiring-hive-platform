@@ -25,6 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   position: z.string().min(2, {
@@ -106,12 +107,13 @@ const AdminJobForm: React.FC = () => {
       const industryObj = industries.find((i) => i.id === values.industry) || industries[0];
 
       // Create job object with the right structure that matches your Supabase table
+      // Convert typed objects to Json compatible format for Supabase
       const jobData = {
         position: values.position,
         jobId: values.jobId,
-        location: locationObj,
-        experience: experienceObj,
-        industry: industryObj,
+        location: locationObj as unknown as Json, // Convert to Json
+        experience: experienceObj as unknown as Json, // Convert to Json
+        industry: industryObj as unknown as Json, // Convert to Json
         description: values.description,
         keyskills: values.keySkills.split('\n'),
         status: values.status ? 'Published' : 'Draft',
