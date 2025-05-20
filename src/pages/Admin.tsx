@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -188,6 +187,11 @@ const Admin = () => {
     setIsLoading(false);
   };
 
+  // Add edit job function
+  const handleEditJob = (jobId: string) => {
+    navigate(`/admin/jobs/edit/${jobId}`);
+  };
+
   // Mark application as processed
   const toggleApplicationProcessed = async (appId: string, currentValue: boolean | null) => {
     const newValue = !currentValue;
@@ -296,7 +300,11 @@ const Admin = () => {
                           <Button variant="ghost" size="icon">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleEditJob(job.id)}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button 
@@ -343,7 +351,7 @@ const Admin = () => {
                                       <td className="px-2 py-2">{app.department}</td>
                                       <td className="px-2 py-2">
                                         <Badge 
-                                          variant={app.processed ? "success" : "secondary"}
+                                          variant={app.processed ? "default" : "secondary"}
                                           className="cursor-pointer"
                                           onClick={() => toggleApplicationProcessed(app.id, app.processed)}
                                         >
@@ -353,7 +361,7 @@ const Admin = () => {
                                       <td className="px-2 py-2">
                                         {app.resume_url ? (
                                           <a 
-                                            href={`${supabase.storage.from('resumes').getPublicUrl(app.resume_url).data.publicUrl}`} 
+                                            href={app.resume_url} 
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="flex items-center text-hragency-blue hover:underline"

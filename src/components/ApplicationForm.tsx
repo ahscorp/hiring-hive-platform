@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Dialog, 
@@ -27,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadResume } from "@/utils/fileUploader";
 
 interface ApplicationFormProps {
   isOpen: boolean;
@@ -99,7 +99,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     setFileError(null);
     
     if (file) {
-      // Check file type - now accepting PDF and DOC/DOCX
+      // Check file type - accepting PDF and DOC/DOCX
       if (
         file.type !== 'application/pdf' && 
         file.type !== 'application/msword' && 
@@ -187,33 +187,39 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       // 2. Submit to Google Apps Script
       const googleScriptUrl = "https://script.google.com/macros/s/AKfycbw1zqQG506KywnsWPsRWn2AvE2W03YXZk39p6Sg1V6YCUu1u-QaIGwSViQPQ-G3yvAImg/exec";
       
-      const response = await fetch(googleScriptUrl, {
-        method: 'POST',
-        body: formDataToSubmit,
-        mode: 'no-cors' // Google Apps Script typically requires no-cors mode
-      });
+      try {
+        const response = await fetch(googleScriptUrl, {
+          method: 'POST',
+          body: formDataToSubmit,
+          mode: 'no-cors' // Google Apps Script typically requires no-cors mode
+        });
+        
+        console.log("Google Apps Script submission successful");
+      } catch (error) {
+        console.error("Google Apps Script submission error:", error);
+        // Continue with local storage even if Google script fails
+      }
       
-      // 3. Upload resume to Supabase Storage
+      // 3. Upload resume to server via PHP script
       let resumeUrl = null;
       if (formData.resume) {
-        const fileExt = formData.resume.name.split('.').pop();
-        const filePath = `${jobId}/${formData.fullName.replace(/\s+/g, '_')}_${Date.now()}.${fileExt}`;
+        const uploadResult = await uploadResume(
+          formData.resume, 
+          jobId || 'default', 
+          formData.fullName
+        );
         
-        const { data: fileData, error: uploadError } = await supabase
-          .storage
-          .from('resumes')
-          .upload(filePath, formData.resume);
-          
-        if (uploadError) {
-          console.error('Error uploading resume:', uploadError);
+        if (!uploadResult.success) {
           toast({
             title: "Upload Error",
-            description: "Failed to upload resume. Your application was still submitted.",
+            description: uploadResult.error || "Failed to upload resume. Please try again.",
             variant: "destructive",
           });
-        } else {
-          resumeUrl = fileData.path;
+          setIsSubmitting(false);
+          return;
         }
+        
+        resumeUrl = uploadResult.resume_url;
       }
       
       // 4. Store application data in Supabase
