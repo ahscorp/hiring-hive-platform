@@ -40,10 +40,10 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
     salary.id === (supabaseJob.industry as any)?.salaryRangeId
   ) || null;
 
-  return {
-    id: supabaseJob.id,
-    title: supabaseJob.position,
-    location: safeGetTypedObject<Location>(supabaseJob.location, defaultLocation),
+    return {
+      id: supabaseJob.jobId || supabaseJob.id,
+      title: supabaseJob.position,
+      location: safeGetTypedObject<Location>(supabaseJob.location, defaultLocation),
     experience: safeGetTypedObject<Experience>(supabaseJob.experience, defaultExperience),
     industry: safeGetTypedObject<Industry>(supabaseJob.industry, defaultIndustry),
     department: supabaseJob.jobId || '',  // Use jobId as department field
