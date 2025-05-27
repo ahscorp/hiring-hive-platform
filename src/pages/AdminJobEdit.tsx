@@ -1,17 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
+import { Form } from "@/lib/form-utils";
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ import {
   experienceRanges,
 } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -75,6 +75,63 @@ const AdminJobEdit: React.FC = () => {
     },
   });
 
+  const fetchJobData = useCallback(async (jobId: string) => {
+    try {
+      const { data: jobData, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', jobId)
+        .single();
+
+      if (error || !jobData) {
+        throw new Error(error?.message || "Job not found");
+      }
+
+      // Prepare form values from job data
+      form.setValue('position', jobData.position);
+      form.setValue('jobId', jobData.jobId || '');
+      
+      interface SelectableObject { id: string; [key: string]: unknown }
+
+      // Handle location, experience, and industry (which are JSON objects)
+      const locationObj = jobData.location as SelectableObject | null;
+      if (locationObj && typeof locationObj.id === 'string') {
+        form.setValue('location', locationObj.id);
+      }
+      
+      const experienceObj = jobData.experience as SelectableObject | null;
+      if (experienceObj && typeof experienceObj.id === 'string') {
+        form.setValue('experience', experienceObj.id);
+      }
+      
+      const industryObj = jobData.industry as SelectableObject | null;
+      if (industryObj && typeof industryObj.id === 'string') {
+        form.setValue('industry', industryObj.id);
+      }
+      
+      // Set description
+      form.setValue('description', jobData.description);
+      
+      // Convert key skills array to string for textarea
+      if (Array.isArray(jobData.keyskills)) {
+        form.setValue('keySkills', jobData.keyskills.join('\n'));
+      }
+      
+      // Set status
+      form.setValue('status', jobData.status === 'Published');
+    } catch (error) {
+      console.error("Error fetching job:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch job data for editing",
+        variant: "destructive",
+      });
+      navigate('/admin');
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [form, toast, navigate]); // Adjusted dependencies for useCallback
+
   useEffect(() => {
     // Check if user is authenticated on component mount
     const checkAuth = async () => {
@@ -102,62 +159,7 @@ const AdminJobEdit: React.FC = () => {
     };
     
     checkAuth();
-  }, [id, navigate]);
-
-  const fetchJobData = async (jobId: string) => {
-    try {
-      const { data: jobData, error } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('id', jobId)
-        .single();
-
-      if (error || !jobData) {
-        throw new Error(error?.message || "Job not found");
-      }
-
-      // Prepare form values from job data
-      form.setValue('position', jobData.position);
-      form.setValue('jobId', jobData.jobId || '');
-      
-      // Handle location, experience, and industry (which are JSON objects)
-      const locationObj = jobData.location as any;
-      if (locationObj && locationObj.id) {
-        form.setValue('location', locationObj.id);
-      }
-      
-      const experienceObj = jobData.experience as any;
-      if (experienceObj && experienceObj.id) {
-        form.setValue('experience', experienceObj.id);
-      }
-      
-      const industryObj = jobData.industry as any;
-      if (industryObj && industryObj.id) {
-        form.setValue('industry', industryObj.id);
-      }
-      
-      // Set description
-      form.setValue('description', jobData.description);
-      
-      // Convert key skills array to string for textarea
-      if (Array.isArray(jobData.keyskills)) {
-        form.setValue('keySkills', jobData.keyskills.join('\n'));
-      }
-      
-      // Set status
-      form.setValue('status', jobData.status === 'Published');
-    } catch (error) {
-      console.error("Error fetching job:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch job data for editing",
-        variant: "destructive",
-      });
-      navigate('/admin');
-    } finally {
-      setIsInitializing(false);
-    }
-  };
+  }, [id, navigate, fetchJobData, toast]);
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
@@ -212,11 +214,12 @@ const AdminJobEdit: React.FC = () => {
         description: "Job updated successfully.",
       });
       navigate('/admin');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating job:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update job.";
       toast({
         title: "Error updating job",
-        description: error.message || "Failed to update job.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

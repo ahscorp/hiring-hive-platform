@@ -23,7 +23,7 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
       typeof jsonValue === 'object' &&
       jsonValue !== null &&
       'id' in jsonValue &&
-      typeof (jsonValue as any).id === 'string'
+      typeof (jsonValue as { id?: unknown }).id === 'string'
     ) {
       return jsonValue as T;
     }
@@ -36,8 +36,9 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
   const defaultIndustry: Industry = { id: 'unknown_ind', name: 'Not Specified' };
   
   // Find the salary range from our predefined ranges that matches this job
+  const industryAsObject = supabaseJob.industry as { salaryRangeId?: string } | null;
   const salaryFromList = salaryRanges.find(salary => 
-    salary.id === (supabaseJob.industry as any)?.salaryRangeId
+    salary.id === industryAsObject?.salaryRangeId
   ) || null;
 
     return {

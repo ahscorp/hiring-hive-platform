@@ -5,7 +5,7 @@ import { Eye, Pencil, Plus, Trash, FileText, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Job, Location, Experience, Industry, SalaryRange } from "@/data/jobTypes"; // Import all necessary types
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useAuth } from "@/hooks/use-auth-context"; // Import useAuth
 import { supabase } from "@/integrations/supabase/client"; // Import Supabase client
 import { Tables, Json } from "@/integrations/supabase/types"; // Import Supabase types
 import {
@@ -27,7 +27,12 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
     jsonValue: Json | undefined | null,
     defaultValue: T
   ): T => {
-    if (typeof jsonValue === 'object' && jsonValue !== null && 'id' in jsonValue && typeof (jsonValue as any).id === 'string') {
+    if (
+      typeof jsonValue === 'object' &&
+      jsonValue !== null &&
+      'id' in jsonValue &&
+      typeof (jsonValue as { id?: unknown }).id === 'string'
+    ) {
       return jsonValue as T;
     }
     return defaultValue;

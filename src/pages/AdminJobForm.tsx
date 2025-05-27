@@ -5,13 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
+import { Form } from "@/lib/form-utils";
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ import {
   experienceRanges,
 } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -134,11 +134,12 @@ const AdminJobForm: React.FC = () => {
         description: "Job created successfully.",
       });
       navigate('/admin');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating job:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create job.";
       toast({
         title: "Error creating job",
-        description: error.message || "Failed to create job.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
