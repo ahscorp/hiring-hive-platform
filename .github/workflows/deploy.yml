@@ -2,8 +2,9 @@ name: 🚀 Build & Deploy to Hostinger
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:      # optional: allows manual runs
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -16,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install dependencies
         run: npm ci
@@ -24,18 +25,15 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
-      - name: Debug: show dist folder
-        run: ls -R dist
-
-      - name: Copy .htaccess into dist folder
+      - name: Copy .htaccess into dist
         run: cp .htaccess dist/.htaccess
 
       - name: Sync to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server:    ${{ secrets.HOSTINGER_FTP_HOST }}
-          username:  ${{ secrets.HOSTINGER_FTP_USER }}
-          password:  ${{ secrets.HOSTINGER_FTP_PASS }}
-          local-dir: dist/
+          server:       ${{ secrets.HOSTINGER_FTP_HOST }}
+          username:     ${{ secrets.HOSTINGER_FTP_USER }}
+          password:     ${{ secrets.HOSTINGER_FTP_PASS }}
+          local-dir:    dist/
           server-dir:   public_html/ahshr/
           create-dirs:  true
