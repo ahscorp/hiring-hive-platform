@@ -77,7 +77,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
   const [fileError, setFileError] = useState<string | null>(null);
 
   // Find the job details
-  const job = jobs.find(j => j.id === jobId) as Job;
+  const job: Job | undefined = jobs.find((j: Job) => j.id === jobId);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -223,10 +223,41 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       }
       
       // 4. Store application data in Supabase
+      let actualJobUUID = null;
+      if (jobId) { // jobId is the human-readable ID like 'AHS001'
+        const { data: jobData, error: jobFetchError } = await supabase
+          .from('jobs') // Assuming your jobs table is named 'jobs'
+          .select('id') // Assuming 'id' is the UUID primary key in the 'jobs' table
+          .eq('job_code', jobId) // ASSUMPTION: 'job_code' is the column storing the human-readable ID like 'AHS001'. This might need to be adjusted.
+          .single();
+
+        if (jobFetchError || !jobData) {
+          console.error('Error fetching job UUID from database:', jobFetchError);
+          toast({
+            title: "System Error",
+            description: "Could not verify job details (UUID fetch failed). Please try again later.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        actualJobUUID = jobData.id;
+      }
+
+      if (!actualJobUUID) {
+        toast({
+          title: "Invalid Job ID",
+          description: "The job ID provided is not valid or could not be found.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error: dbError } = await supabase
         .from('applications')
         .insert({
-          job_id: jobId,
+          job_id: actualJobUUID, // Use the fetched UUID
           fullname: formData.fullName,
           email: formData.email,
           phone: formData.phone,
