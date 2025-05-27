@@ -228,7 +228,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
         const { data: jobData, error: jobFetchError } = await supabase
           .from('jobs') // Assuming your jobs table is named 'jobs'
           .select('id') // Assuming 'id' is the UUID primary key in the 'jobs' table
-          .eq('job_code', jobId) // ASSUMPTION: 'job_code' is the column storing the human-readable ID like 'AHS001'. This might need to be adjusted.
+          .eq('jobId', jobId) // Corrected to use 'jobId' as per database schema
           .single();
 
         if (jobFetchError || !jobData) {
