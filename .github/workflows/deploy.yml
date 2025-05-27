@@ -34,6 +34,6 @@ jobs:
           server:       ${{ secrets.HOSTINGER_FTP_HOST }}
           username:     ${{ secrets.HOSTINGER_FTP_USER }}
           password:     ${{ secrets.HOSTINGER_FTP_PASS }}
+          port:       21           # <-- add your FTP port here
           local-dir:    dist/
           server-dir:   public_html/ahshr/
-          create-dirs:  true
