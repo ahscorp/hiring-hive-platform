@@ -72,7 +72,8 @@ const Index = () => {
   
   // States for application form
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null); // Keep this if needed elsewhere, or remove if selectedJobForForm is sufficient
+  const [selectedJobForForm, setSelectedJobForForm] = useState<Job | null>(null);
 
   // Fetch jobs from Supabase on component mount
   useEffect(() => {
@@ -155,13 +156,21 @@ const Index = () => {
   }, [selectedIndustry, selectedLocation, selectedExperience, selectedSalary, searchQuery, allJobs]);
 
   const handleApply = (jobId: string) => {
-    setSelectedJobId(jobId);
-    setIsFormOpen(true);
+    const jobToApply = allJobs.find(job => job.id === jobId);
+    if (jobToApply) {
+      setSelectedJobForForm(jobToApply);
+      setSelectedJobId(jobId); // Keep this if it's used for other UI elements not related to the form
+      setIsFormOpen(true);
+    } else {
+      console.error("Job not found for ID:", jobId);
+      toast({ title: "Error", description: "Could not find job details to apply.", variant: "destructive" });
+    }
   };
 
   const closeForm = () => {
     setIsFormOpen(false);
-    setSelectedJobId(null);
+    setSelectedJobId(null); // Keep resetting this if it's used elsewhere
+    setSelectedJobForForm(null);
   };
 
   return (
@@ -192,7 +201,7 @@ const Index = () => {
         <ApplicationForm 
           isOpen={isFormOpen} 
           onClose={closeForm}
-          jobId={selectedJobId}
+          job={selectedJobForForm}
         />
       </div>
     </div>
