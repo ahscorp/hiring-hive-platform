@@ -131,17 +131,6 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { //
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Ensure job object and job.id are valid before proceeding
-    if (!job || typeof job !== 'object' || !job.id) {
-      toast({
-        title: "Job Information Error",
-        description: "Essential job information is missing or invalid. Please close the form and select a job again.",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-      return;
-    }
     
     // Validate required fields
     const requiredFields = [
@@ -270,15 +259,14 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { //
       // STEP 3: Store application data in Supabase (using uploadedResumeUrl)
       let actualJobUUID = null;
       if (job?.id) { // Use job.id from prop
-        console.log(`Attempting to fetch UUID for human-readable job ID: ${job.id}`);
         const { data: jobData, error: jobFetchError } = await supabase
-          .from('jobs') // Assuming your table is named 'jobs'
-          .select('id') // Assuming 'id' is the UUID primary key column
-          .eq('jobId', job.id) // Assuming 'jobId' is the column for human-readable ID like 'AHS001'
+          .from('jobs')
+          .select('id') 
+          .eq('jobId', job.id) // Use job.id from prop for matching human-readable ID
           .single();
 
         if (jobFetchError || !jobData) {
-          console.error(`Error fetching job UUID for human-readable ID '${job.id}'. Error:`, jobFetchError, 'Received data:', jobData);
+          console.error('Error fetching job UUID from database:', jobFetchError);
           toast({
             title: "System Error",
             description: "Could not verify job details (UUID fetch failed). Please try again later.",
@@ -287,15 +275,10 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { //
           setIsSubmitting(false);
           return;
         }
-        console.log(`Successfully fetched data for human-readable ID '${job.id}':`, JSON.stringify(jobData));
-        actualJobUUID = jobData.id; // Extract the UUID
-        if (!actualJobUUID) {
-            // This log helps if jobData is returned but jobData.id is null or undefined
-            console.error(`UUID (jobData.id) is missing or null in fetched data for human-readable ID '${job.id}'. Full fetched data:`, JSON.stringify(jobData));
-        }
+        actualJobUUID = jobData.id;
       }
 
-      if (!actualJobUUID) { // This check remains to catch if job.id was initially null or if UUID wasn't found
+      if (!actualJobUUID) {
         toast({
           title: "Invalid Job ID",
           description: "The job ID provided is not valid or could not be found.",
