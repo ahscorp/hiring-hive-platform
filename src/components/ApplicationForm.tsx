@@ -232,18 +232,25 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       const googleScriptUrl = "https://webhook.site/32db4446-36a6-4755-999d-ebe81debd2b3";
       
       try {
-        await fetch(googleScriptUrl, {
+        const response = await fetch(googleScriptUrl, { // googleScriptUrl is now webhook.site URL
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: urlEncodedData,
-          mode: 'no-cors'
+          body: urlEncodedData
+          // mode: 'no-cors' // REMOVED to allow seeing the actual response
         });
-        console.log("Google Apps Script submission successful (URL-encoded)");
+        console.log("Webhook submission response status:", response.status);
+        if (!response.ok) {
+          console.error("Webhook submission to webhook.site failed. Status:", response.status);
+          const responseText = await response.text();
+          console.error("Webhook.site response text:", responseText);
+        } else {
+          console.log("Webhook submission to webhook.site successful (URL-encoded)");
+        }
       } catch (error) {
-        console.error("Google Apps Script submission error (URL-encoded):", error);
-        // Log and continue, as per original behavior for Google Script failure
+        console.error("Webhook submission error to webhook.site (URL-encoded):", error);
+        // Log and continue
       }
       
       // STEP 3: Store application data in Supabase (using uploadedResumeUrl)
