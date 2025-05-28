@@ -223,6 +223,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
         'Date': new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         'Time': new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(),
         'Page URL': window.location.href,
+        'form_name': jobId || '' // Adding jobId as form_name
       };
 
       const urlEncodedData = Object.keys(webhookPayload)
