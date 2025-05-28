@@ -67,6 +67,7 @@ const departments = [
 ];
 
 const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { // Changed jobId to job
+  console.log("ApplicationForm: Received job prop:", job); // Log 1: Initial job prop
   const [formData, setFormData] = useState<ApplicationFormType>({
     ...initialFormData,
     jobId: job?.id || "", // Use job.id from prop
@@ -174,6 +175,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { //
       // STEP 1: Upload resume to server via PHP script (this happens first)
       let uploadedResumeUrl = ""; 
       if (formData.resume) {
+        console.log("ApplicationForm handleSubmit: job?.id before resume upload:", job?.id); // Log 2: Job ID before resume upload
         const uploadResult = await uploadResume(
           formData.resume,
           job?.id || 'default', // Use job.id from prop
@@ -259,12 +261,14 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { //
       // STEP 3: Store application data in Supabase (using uploadedResumeUrl)
       let actualJobUUID = null;
       if (job?.id) { // Use job.id from prop
+        console.log("ApplicationForm handleSubmit: job?.id before Supabase query:", job?.id); // Log 3: Job ID before Supabase query
         const { data: jobData, error: jobFetchError } = await supabase
           .from('jobs')
           .select('id') 
           .eq('jobId', job.id) // Use job.id from prop for matching human-readable ID
           .single();
 
+        console.log("ApplicationForm handleSubmit: Supabase jobData:", jobData, "jobFetchError:", jobFetchError); // Log 4: Supabase query result
         if (jobFetchError || !jobData) {
           console.error('Error fetching job UUID from database:', jobFetchError);
           toast({
@@ -278,6 +282,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { //
         actualJobUUID = jobData.id;
       }
 
+      console.log("ApplicationForm handleSubmit: actualJobUUID:", actualJobUUID); // Log 5: actualJobUUID value
       if (!actualJobUUID) {
         toast({
           title: "Invalid Job ID",
