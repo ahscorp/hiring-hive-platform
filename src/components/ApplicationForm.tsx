@@ -172,44 +172,16 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     setIsSubmitting(true);
     
     try {
-      // 1. First, prepare data for Google Apps Script submission
-      const formDataToSubmit = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key !== 'resume') {
-          formDataToSubmit.append(key, value?.toString() || '');
-        }
-      });
-      
-      if (formData.resume) {
-        formDataToSubmit.append('resume', formData.resume);
-      }
-      
-      // 2. Submit to Google Apps Script
-      const googleScriptUrl = "https://script.google.com/macros/s/AKfycbw1zqQG506KywnsWPsRWn2AvE2W03YXZk39p6Sg1V6YCUu1u-QaIGwSViQPQ-G3yvAImg/exec";
-      
-      try {
-        const response = await fetch(googleScriptUrl, {
-          method: 'POST',
-          body: formDataToSubmit,
-          mode: 'no-cors' // Google Apps Script typically requires no-cors mode
-        });
-        
-        console.log("Google Apps Script submission successful");
-      } catch (error) {
-        console.error("Google Apps Script submission error:", error);
-        // Continue with local storage even if Google script fails
-      }
-      
-      // 3. Upload resume to server via PHP script
-      let resumeUrl = null;
-      if (formData.resume) {
+      // STEP 1: Upload resume to server via PHP script (this happens first)
+      let uploadedResumeUrl = ""; 
+      if (formData.resume) { 
         const uploadResult = await uploadResume(
           formData.resume, 
           jobId || 'default', 
           formData.fullName
         );
         
-        if (!uploadResult.success) {
+        if (!uploadResult.success || !uploadResult.resume_url) { 
           toast({
             title: "Upload Error",
             description: uploadResult.error || "Failed to upload resume. Please try again.",
@@ -218,11 +190,64 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
           setIsSubmitting(false);
           return;
         }
-        
-        resumeUrl = uploadResult.resume_url;
+        uploadedResumeUrl = uploadResult.resume_url; 
+      } else {
+        // This case should ideally not be reached if the !formData.resume validation check before setIsSubmitting(true) is hit.
+        toast({ 
+          title: "Resume Missing",
+          description: "Resume file is required but was not found during submission process.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // STEP 2: Submit to Google Apps Script (using the uploadedResumeUrl)
+      const webhookPayload: { [key: string]: string } = {
+        'Full Name': formData.fullName,
+        'Email': formData.email,
+        'Contact Number': formData.phone,
+        'Years Of Experience': formData.yearsOfExperience,
+        'Current Company Name': formData.currentCompany,
+        'Current Designation': formData.currentDesignation || '',
+        'Current CTC (per annum)': formData.currentCTC || '',
+        'Current Take Home Salary (per month)': formData.currentTakeHome || '',
+        'Expected CTC (per annum)': formData.expectedCTC,
+        'What is your notice period ?(in days)': formData.noticePeriod || '',
+        'What is your current location ?': formData.location,
+        'In which department are you searching for job ?': formData.department,
+        'Other': formData.department === "Other" ? formData.otherDepartment || '' : '',
+        'Upload Resume': uploadedResumeUrl,
+        'job_id': jobId || '', 
+        'job_title': job?.title || '',
+        'Date': new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        'Time': new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(),
+        'Page URL': window.location.href,
+      };
+
+      const urlEncodedData = Object.keys(webhookPayload)
+        .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(webhookPayload[key]))
+        .join('&');
+      
+      const googleScriptUrl = "https://script.google.com/macros/s/AKfycbw1zqQG506KywnsWPsRWn2AvE2W03YXZk39p6Sg1V6YCUu1u-QaIGwSViQPQ-G3yvAImg/exec";
+      
+      try {
+        await fetch(googleScriptUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: urlEncodedData,
+          mode: 'no-cors'
+        });
+        console.log("Google Apps Script submission successful (URL-encoded)");
+      } catch (error) {
+        console.error("Google Apps Script submission error (URL-encoded):", error);
+        // Log and continue, as per original behavior for Google Script failure
       }
       
-      // 4. Store application data in Supabase
+      // STEP 3: Store application data in Supabase (using uploadedResumeUrl)
+      // The 'resumeUrl' variable is no longer used here; 'uploadedResumeUrl' is used in the Supabase insert.
       let actualJobUUID = null;
       if (jobId) { // jobId is the human-readable ID like 'AHS001'
         const { data: jobData, error: jobFetchError } = await supabase
@@ -271,7 +296,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
           location: formData.location,
           department: formData.department,
           otherdepartment: formData.department === "Other" ? formData.otherDepartment : null,
-          resume_url: resumeUrl,
+          resume_url: uploadedResumeUrl, // Use the URL from the unified upload
           processed: false
         });
         
