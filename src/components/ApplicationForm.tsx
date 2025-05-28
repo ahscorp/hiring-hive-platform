@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ApplicationForm as ApplicationFormType, Job } from "@/data/jobTypes";
 import { useToast } from "@/hooks/use-toast";
-import { jobs } from "@/data/mockData";
+// import { jobs } from "@/data/mockData"; // No longer needed as job object is passed directly
 import { Upload, X, FileText } from "lucide-react";
 import { 
   RadioGroup, 
@@ -31,7 +31,7 @@ import { uploadResume } from "@/utils/fileUploader";
 interface ApplicationFormProps {
   isOpen: boolean;
   onClose: () => void;
-  jobId: string | null;
+  job: Job | null; // Changed from jobId
 }
 
 const initialFormData: ApplicationFormType = {
@@ -49,7 +49,7 @@ const initialFormData: ApplicationFormType = {
   department: "",
   otherDepartment: "",
   resume: null,
-  jobId: "",
+  jobId: "", // This will be updated based on the job prop
 };
 
 const departments = [
@@ -66,18 +66,17 @@ const departments = [
   "Other"
 ];
 
-const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
+const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => { // Changed jobId to job
   const [formData, setFormData] = useState<ApplicationFormType>({
     ...initialFormData,
-    jobId: jobId || "",
+    jobId: job?.id || "", // Use job.id from prop
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [fileError, setFileError] = useState<string | null>(null);
 
-  // Find the job details
-  const job: Job | undefined = jobs.find((j: Job) => j.id === jobId);
+  // job object is now directly available from props, no need to find it from mockData
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -136,7 +135,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     // Validate required fields
     const requiredFields = [
       'fullName', 'email', 'phone', 'yearsOfExperience', 
-      'currentCompany', 'expectedCTC', 'location', 'department'
+      'currentCompany', 'expectedCTC', 'noticePeriod', 'location', 'department' // Added noticePeriod
     ] as const;
     
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -174,14 +173,14 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
     try {
       // STEP 1: Upload resume to server via PHP script (this happens first)
       let uploadedResumeUrl = ""; 
-      if (formData.resume) { 
+      if (formData.resume) {
         const uploadResult = await uploadResume(
-          formData.resume, 
-          jobId || 'default', 
+          formData.resume,
+          job?.id || 'default', // Use job.id from prop
           formData.fullName
         );
-        
-        if (!uploadResult.success || !uploadResult.resume_url) { 
+
+        if (!uploadResult.success || !uploadResult.resume_url) {
           toast({
             title: "Upload Error",
             description: uploadResult.error || "Failed to upload resume. Please try again.",
@@ -190,10 +189,13 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
           setIsSubmitting(false);
           return;
         }
-        uploadedResumeUrl = uploadResult.resume_url; 
+        // Construct absolute URL
+        const relativeResumeUrl = uploadResult.resume_url;
+        const pathSegment = relativeResumeUrl.startsWith('/') ? relativeResumeUrl.substring(1) : relativeResumeUrl;
+        uploadedResumeUrl = `${window.location.origin}/${pathSegment}`;
       } else {
         // This case should ideally not be reached if the !formData.resume validation check before setIsSubmitting(true) is hit.
-        toast({ 
+        toast({
           title: "Resume Missing",
           description: "Resume file is required but was not found during submission process.",
           variant: "destructive",
@@ -217,13 +219,13 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
         'What is your current location ?': formData.location,
         'In which department are you searching for job ?': formData.department,
         'Other': formData.department === "Other" ? formData.otherDepartment || '' : '',
-        'Upload Resume': uploadedResumeUrl,
-        'job_id': jobId || '', 
-        'job_title': job?.title || '',
+        'Upload Resume': uploadedResumeUrl, // Now an absolute URL
+        'job_id': job?.id || '',  // Use job.id from prop
+        'job_title': job?.title || '', // Use job.title from prop
         'Date': new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         'Time': new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(),
         'Page URL': window.location.href,
-        'form_name': jobId || '' // Adding jobId as form_name
+        'form_name': job?.id || '' // Use job.id from prop
       };
 
       const urlEncodedData = Object.keys(webhookPayload)
@@ -255,13 +257,12 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       }
       
       // STEP 3: Store application data in Supabase (using uploadedResumeUrl)
-      // The 'resumeUrl' variable is no longer used here; 'uploadedResumeUrl' is used in the Supabase insert.
       let actualJobUUID = null;
-      if (jobId) { // jobId is the human-readable ID like 'AHS001'
+      if (job?.id) { // Use job.id from prop
         const { data: jobData, error: jobFetchError } = await supabase
-          .from('jobs') // Assuming your jobs table is named 'jobs'
-          .select('id') // Assuming 'id' is the UUID primary key in the 'jobs' table
-          .eq('jobId', jobId) // Corrected to use 'jobId' as per database schema
+          .from('jobs')
+          .select('id') 
+          .eq('jobId', job.id) // Use job.id from prop for matching human-readable ID
           .single();
 
         if (jobFetchError || !jobData) {
@@ -304,7 +305,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
           location: formData.location,
           department: formData.department,
           otherdepartment: formData.department === "Other" ? formData.otherDepartment : null,
-          resume_url: uploadedResumeUrl, // Use the URL from the unified upload
+          resume_url: uploadedResumeUrl, // Now an absolute URL
           processed: false
         });
         
@@ -355,7 +356,8 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Apply for {job?.title}</DialogTitle>
-          <p className="text-sm text-muted-foreground mt-2">Job ID: {job?.department || jobId}</p>
+          {/* Display human-readable job ID from the job prop */}
+          <p className="text-sm text-muted-foreground mt-2">Job ID: {job?.id || 'N/A'}</p>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
