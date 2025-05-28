@@ -229,7 +229,7 @@ const ApplicationForm = ({ isOpen, onClose, jobId }: ApplicationFormProps) => {
         .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(webhookPayload[key]))
         .join('&');
       
-      const googleScriptUrl = "https://webhook.site/32db4446-36a6-4755-999d-ebe81debd2b3";
+      const googleScriptUrl = "https://script.google.com/macros/s/AKfycbw1zqQG506KywnsWPsRWn2AvE2W03YXZk39p6Sg1V6YCUu1u-QaIGwSViQPQ-G3yvAImg/exec";
       
       try {
         const response = await fetch(googleScriptUrl, { // googleScriptUrl is now webhook.site URL
