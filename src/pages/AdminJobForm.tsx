@@ -18,14 +18,11 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import {
-  industries,
-  locations,
   experienceRanges,
 } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   position: z.string().min(2, {
@@ -35,13 +32,13 @@ const formSchema = z.object({
     message: "Job ID must be at least 2 characters.",
   }),
   location: z.string().min(2, {
-    message: "Please select a location.",
+    message: "Location must be at least 2 characters.",
   }),
   experience: z.string().min(2, {
     message: "Please select an experience range.",
   }),
   industry: z.string().min(2, {
-    message: "Please select an industry.",
+    message: "Industry must be at least 2 characters.",
   }),
   description: z.string().min(10, {
     message: "Description must be at least 10 characters.",
@@ -49,6 +46,7 @@ const formSchema = z.object({
   keySkills: z.string().min(10, {
     message: "Key skills must be at least 10 characters.",
   }),
+  ctc: z.string().optional(),
   status: z.boolean().default(false),
 });
 
@@ -85,9 +83,48 @@ const AdminJobForm: React.FC = () => {
       industry: "",
       description: "",
       keySkills: "",
+      ctc: "",
       status: false,
     },
   });
+
+  // Function to add location to database if it doesn't exist
+  const addLocationIfNotExists = async (locationText: string) => {
+    if (!locationText.includes(',')) {
+      throw new Error('Location must be in format: City, State');
+    }
+
+    const [city, state] = locationText.split(',').map(s => s.trim());
+    
+    try {
+      const { error } = await supabase
+        .from('locations')
+        .insert({ city, state })
+        .select();
+      
+      if (error && !error.message.includes('duplicate')) {
+        throw error;
+      }
+    } catch (error) {
+      console.log('Location already exists or error adding:', error);
+    }
+  };
+
+  // Function to add industry to database if it doesn't exist
+  const addIndustryIfNotExists = async (industryName: string) => {
+    try {
+      const { error } = await supabase
+        .from('industries')
+        .insert({ name: industryName })
+        .select();
+      
+      if (error && !error.message.includes('duplicate')) {
+        throw error;
+      }
+    } catch (error) {
+      console.log('Industry already exists or error adding:', error);
+    }
+  };
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
@@ -102,20 +139,20 @@ const AdminJobForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const locationObj = locations.find((l) => l.id === values.location) || locations[0];
-      const experienceObj = experienceRanges.find((e) => e.id === values.experience) || experienceRanges[0];
-      const industryObj = industries.find((i) => i.id === values.industry) || industries[0];
+      // Add location and industry to their respective tables if they don't exist
+      await addLocationIfNotExists(values.location);
+      await addIndustryIfNotExists(values.industry);
 
       // Create job object with the right structure that matches your Supabase table
-      // Convert typed objects to Json compatible format for Supabase
       const jobData = {
         position: values.position,
         jobId: values.jobId,
-        location: locationObj as unknown as Json, // Convert to Json
-        experience: experienceObj as unknown as Json, // Convert to Json
-        industry: industryObj as unknown as Json, // Convert to Json
+        location: values.location,
+        experience: values.experience,
+        industry: values.industry,
         description: values.description,
         keyskills: values.keySkills.split('\n'),
+        ctc: values.ctc || null,
         status: values.status ? 'Published' : 'Draft',
         dateposted: new Date().toISOString(),
         user_id: user.id,
@@ -196,18 +233,9 @@ const AdminJobForm: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Location</FormLabel>
-                  <Select onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a location" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem key={location.id} value={location.id}>{location.city}, {location.state}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder="City, State (e.g., Mumbai, Maharashtra)" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -226,7 +254,7 @@ const AdminJobForm: React.FC = () => {
                     </FormControl>
                     <SelectContent>
                       {experienceRanges.map((experience) => (
-                        <SelectItem key={experience.id} value={experience.id}>{experience.range}</SelectItem>
+                        <SelectItem key={experience.id} value={experience.range}>{experience.range}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -240,18 +268,22 @@ const AdminJobForm: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Industry</FormLabel>
-                  <Select onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an industry" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {industries.map((industry) => (
-                        <SelectItem key={industry.id} value={industry.id}>{industry.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder="Industry (e.g., Technology, Healthcare)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ctc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CTC (Cost to Company)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., 8-12 LPA" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

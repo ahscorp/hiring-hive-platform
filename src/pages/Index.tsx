@@ -1,11 +1,12 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client"; 
-import { Tables, Json } from "@/integrations/supabase/types"; 
+import { Tables } from "@/integrations/supabase/types"; 
 import { Job, Location, Experience, Industry, SalaryRange } from "@/data/jobTypes"; 
 import JobFilters from "@/components/JobFilters";
 import JobList from "@/components/JobList";
 import ApplicationForm from "@/components/ApplicationForm";
-import { experienceRanges, industries, locations, salaryRanges } from "@/data/mockData"; 
+import { experienceRanges, salaryRanges } from "@/data/mockData"; 
 import JobBoardHeader from "@/components/JobBoardHeader";
 import { toast } from '@/hooks/use-toast';
 
@@ -14,46 +15,49 @@ type SupabaseJobRow = Tables<'jobs'>;
 
 // Mapping function from SupabaseJobRow to our application's Job type
 const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
-  // Helper function to safely get a typed object from a Json field
-  const safeGetTypedObject = <T extends { id: string }>(
-    jsonValue: Json | undefined | null,
-    defaultValue: T
-  ): T => {
-    if (
-      typeof jsonValue === 'object' &&
-      jsonValue !== null &&
-      'id' in jsonValue &&
-      typeof (jsonValue as { id?: unknown }).id === 'string'
-    ) {
-      return jsonValue as T;
-    }
-    return defaultValue;
+  // Create location object from string
+  const locationText = supabaseJob.location || 'Not Specified';
+  const locationParts = locationText.includes(',') ? locationText.split(',') : ['Not Specified', ''];
+  const defaultLocation: Location = { 
+    id: locationText.toLowerCase().replace(/[^a-z0-9]/g, '_'), 
+    city: locationParts[0].trim(), 
+    state: locationParts[1]?.trim() || '' 
   };
 
-  // Default values for complex types
-  const defaultLocation: Location = { id: 'unknown_loc', city: 'Not Specified', state: '' };
-  const defaultExperience: Experience = { id: 'unknown_exp', range: 'Not Specified', minYears: 0, maxYears: null };
-  const defaultIndustry: Industry = { id: 'unknown_ind', name: 'Not Specified' };
-  
-  // Find the salary range from our predefined ranges that matches this job
-  const industryAsObject = supabaseJob.industry as { salaryRangeId?: string } | null;
-  const salaryFromList = salaryRanges.find(salary => 
-    salary.id === industryAsObject?.salaryRangeId
-  ) || null;
+  // Create experience object from string
+  const experienceText = supabaseJob.experience || 'Not Specified';
+  const experienceObj = experienceRanges.find(exp => exp.range === experienceText);
+  const defaultExperience: Experience = experienceObj || { 
+    id: experienceText.toLowerCase().replace(/[^a-z0-9]/g, '_'), 
+    range: experienceText, 
+    minYears: 0, 
+    maxYears: null 
+  };
 
-    return {
-      id: supabaseJob.jobId || supabaseJob.id,
-      title: supabaseJob.position,
-      location: safeGetTypedObject<Location>(supabaseJob.location, defaultLocation),
-    experience: safeGetTypedObject<Experience>(supabaseJob.experience, defaultExperience),
-    industry: safeGetTypedObject<Industry>(supabaseJob.industry, defaultIndustry),
-    department: supabaseJob.jobId || '',  // Use jobId as department field
+  // Create industry object from string
+  const industryText = supabaseJob.industry || 'Not Specified';
+  const defaultIndustry: Industry = { 
+    id: industryText.toLowerCase().replace(/[^a-z0-9]/g, '_'), 
+    name: industryText 
+  };
+  
+  // Use a default salary range for now
+  const defaultSalaryRange = salaryRanges[0] || null;
+
+  return {
+    id: supabaseJob.jobId || supabaseJob.id,
+    title: supabaseJob.position,
+    location: defaultLocation,
+    experience: defaultExperience,
+    industry: defaultIndustry,
+    department: supabaseJob.jobId || '',
     keySkills: supabaseJob.keyskills || [],
     description: supabaseJob.description,
-    responsibilities: supabaseJob.keyskills || [], // Use keyskills as responsibilities temporarily
-    salaryRange: salaryFromList, // Use a fixed salary range from our predefined list for now
+    responsibilities: supabaseJob.keyskills || [],
+    salaryRange: defaultSalaryRange,
     status: supabaseJob.status as ('Published' | 'Draft'),
     datePosted: supabaseJob.dateposted || new Date().toISOString(),
+    ctc: supabaseJob.ctc || null,
   };
 };
 
@@ -72,7 +76,7 @@ const Index = () => {
   
   // States for application form
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null); // Keep this if needed elsewhere, or remove if selectedJobForForm is sufficient
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobForForm, setSelectedJobForForm] = useState<Job | null>(null);
 
   // Fetch jobs from Supabase on component mount
@@ -83,7 +87,7 @@ const Index = () => {
         const { data: supabaseData, error } = await supabase
           .from('jobs')
           .select('*')
-          .eq('status', 'Published'); // Only get published jobs
+          .eq('status', 'Published');
 
         if (error) {
           console.error("Error fetching jobs:", error);
@@ -98,7 +102,7 @@ const Index = () => {
           const mappedJobs = supabaseData ? supabaseData.map(mapSupabaseJobToAppJob) : [];
           console.log("Mapped jobs:", mappedJobs);
           setAllJobs(mappedJobs);
-          setFilteredJobs(mappedJobs); // Initialize filtered jobs with all jobs
+          setFilteredJobs(mappedJobs);
         }
       } catch (err) {
         console.error("Exception fetching jobs:", err);
@@ -122,15 +126,18 @@ const Index = () => {
       let result = [...allJobs];
       
       if (selectedIndustry) {
-        result = result.filter(job => job.industry && job.industry.id === selectedIndustry);
+        result = result.filter(job => job.industry && job.industry.name.toLowerCase().includes(selectedIndustry.toLowerCase()));
       }
       
       if (selectedLocation) {
-        result = result.filter(job => job.location && job.location.id === selectedLocation);
+        result = result.filter(job => job.location && 
+          (job.location.city.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+           job.location.state.toLowerCase().includes(selectedLocation.toLowerCase()))
+        );
       }
       
       if (selectedExperience) {
-        result = result.filter(job => job.experience && job.experience.id === selectedExperience);
+        result = result.filter(job => job.experience && job.experience.range.toLowerCase().includes(selectedExperience.toLowerCase()));
       }
       
       if (selectedSalary) {
@@ -159,7 +166,7 @@ const Index = () => {
     const jobToApply = allJobs.find(job => job.id === jobId);
     if (jobToApply) {
       setSelectedJobForForm(jobToApply);
-      setSelectedJobId(jobId); // Keep this if it's used for other UI elements not related to the form
+      setSelectedJobId(jobId);
       setIsFormOpen(true);
     } else {
       console.error("Job not found for ID:", jobId);
@@ -169,7 +176,7 @@ const Index = () => {
 
   const closeForm = () => {
     setIsFormOpen(false);
-    setSelectedJobId(null); // Keep resetting this if it's used elsewhere
+    setSelectedJobId(null);
     setSelectedJobForForm(null);
   };
 

@@ -80,45 +80,87 @@ export type Database = {
           },
         ]
       }
+      industries: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
+          ctc: string | null
           dateposted: string | null
           description: string
-          experience: Json
+          experience: string
           id: string
-          industry: Json
+          industry: string
           jobId: string | null
           keyskills: string[]
-          location: Json
+          location: string
           position: string
           status: string
           user_id: string | null
         }
         Insert: {
+          ctc?: string | null
           dateposted?: string | null
           description: string
-          experience: Json
+          experience: string
           id?: string
-          industry: Json
+          industry: string
           jobId?: string | null
           keyskills: string[]
-          location: Json
+          location: string
           position: string
           status?: string
           user_id?: string | null
         }
         Update: {
+          ctc?: string | null
           dateposted?: string | null
           description?: string
-          experience?: Json
+          experience?: string
           id?: string
-          industry?: Json
+          industry?: string
           jobId?: string | null
           keyskills?: string[]
-          location?: Json
+          location?: string
           position?: string
           status?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      locations: {
+        Row: {
+          city: string
+          created_at: string | null
+          id: string
+          state: string
+        }
+        Insert: {
+          city: string
+          created_at?: string | null
+          id?: string
+          state: string
+        }
+        Update: {
+          city?: string
+          created_at?: string | null
+          id?: string
+          state?: string
         }
         Relationships: []
       }

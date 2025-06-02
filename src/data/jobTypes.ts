@@ -37,6 +37,7 @@ export interface Job {
   salaryRange: SalaryRange | null;
   status: 'Published' | 'Draft';
   datePosted: string;
+  ctc?: string | null;
 }
 
 export interface ApplicationForm {
