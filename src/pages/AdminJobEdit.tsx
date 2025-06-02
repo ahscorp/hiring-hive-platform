@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from "react-hook-form";
@@ -47,6 +46,7 @@ const formSchema = z.object({
     message: "Key skills must be at least 10 characters.",
   }),
   ctc: z.string().optional(),
+  gender: z.enum(["male", "female"]).optional(),
   status: z.boolean().default(false),
 });
 
@@ -70,6 +70,7 @@ const AdminJobEdit: React.FC = () => {
       description: "",
       keySkills: "",
       ctc: "",
+      gender: undefined,
       status: false,
     },
   });
@@ -94,6 +95,7 @@ const AdminJobEdit: React.FC = () => {
       form.setValue('industry', jobData.industry || '');
       form.setValue('description', jobData.description);
       form.setValue('ctc', jobData.ctc || '');
+      form.setValue('gender', jobData.gender || undefined);
       
       // Convert key skills array to string for textarea
       if (Array.isArray(jobData.keyskills)) {
@@ -218,6 +220,7 @@ const AdminJobEdit: React.FC = () => {
         description: values.description,
         keyskills: values.keySkills.split('\n'),
         ctc: values.ctc || null,
+        gender: values.gender || null,
         status: values.status ? 'Published' : 'Draft',
         // Don't update dateposted and user_id on edit
       };
@@ -375,6 +378,27 @@ const AdminJobEdit: React.FC = () => {
                   <FormControl>
                     <Textarea placeholder="Key Skills (one per line)" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender Preference (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender preference" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
