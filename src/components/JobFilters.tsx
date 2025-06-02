@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,21 +12,9 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
-import { Experience, SalaryRange } from "@/data/jobTypes";
-import { experienceRanges, salaryRanges } from "@/data/mockData";
-import { supabase } from "@/integrations/supabase/client";
+import { Experience, Industry, Location, SalaryRange } from "@/data/jobTypes";
+import { experienceRanges, industries, locations, salaryRanges } from "@/data/mockData";
 import { Search, X } from "lucide-react";
-
-interface Location {
-  id: string;
-  city: string;
-  state: string;
-}
-
-interface Industry {
-  id: string;
-  name: string;
-}
 
 interface JobFiltersProps {
   selectedIndustry: string | null;
@@ -53,79 +41,12 @@ const JobFilters = ({
   searchQuery,
   setSearchQuery,
 }: JobFiltersProps) => {
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [industries, setIndustries] = useState<Industry[]>([]);
-  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
-  const [isLoadingIndustries, setIsLoadingIndustries] = useState(true);
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('locations')
-          .select('*')
-          .order('city');
-        
-        if (error) {
-          console.error('Error fetching locations:', error);
-        } else {
-          const mappedLocations = data.map(location => ({
-            id: location.id,
-            city: location.city,
-            state: location.state
-          }));
-          setLocations(mappedLocations);
-        }
-      } catch (err) {
-        console.error('Exception fetching locations:', err);
-      } finally {
-        setIsLoadingLocations(false);
-      }
-    };
-
-    const fetchIndustries = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('industries')
-          .select('*')
-          .order('name');
-        
-        if (error) {
-          console.error('Error fetching industries:', error);
-        } else {
-          const mappedIndustries = data.map(industry => ({
-            id: industry.id,
-            name: industry.name
-          }));
-          setIndustries(mappedIndustries);
-        }
-      } catch (err) {
-        console.error('Exception fetching industries:', err);
-      } finally {
-        setIsLoadingIndustries(false);
-      }
-    };
-
-    fetchLocations();
-    fetchIndustries();
-  }, []);
-
   const handleClearFilters = () => {
     setSelectedIndustry(null);
     setSelectedLocation(null);
     setSelectedExperience(null);
     setSelectedSalary(null);
     setSearchQuery("");
-  };
-
-  const getSelectedIndustryName = () => {
-    const industry = industries.find(i => i.id === selectedIndustry);
-    return industry ? industry.name : '';
-  };
-
-  const getSelectedLocationName = () => {
-    const location = locations.find(l => l.id === selectedLocation);
-    return location ? `${location.city}, ${location.state}` : '';
   };
 
   return (
@@ -140,11 +61,10 @@ const JobFilters = ({
           <Label htmlFor="industry-filter">Industry</Label>
           <Select 
             value={selectedIndustry || ""} 
-            onValueChange={(value) => setSelectedIndustry(value === "all-industries" ? null : value)}
-            disabled={isLoadingIndustries}
+            onValueChange={(value) => setSelectedIndustry(value || null)}
           >
             <SelectTrigger id="industry-filter">
-              <SelectValue placeholder={isLoadingIndustries ? "Loading..." : "All Industries"} />
+              <SelectValue placeholder="All Industries" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all-industries">All Industries</SelectItem>
@@ -162,10 +82,9 @@ const JobFilters = ({
           <Select 
             value={selectedLocation || ""} 
             onValueChange={(value) => setSelectedLocation(value === "all-locations" ? null : value)}
-            disabled={isLoadingLocations}
           >
             <SelectTrigger id="location-filter">
-              <SelectValue placeholder={isLoadingLocations ? "Loading..." : "All Locations"} />
+              <SelectValue placeholder="All Locations" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all-locations">All Locations</SelectItem>
@@ -246,7 +165,7 @@ const JobFilters = ({
               className="filter-badge-selected cursor-pointer"
               onClick={() => setSelectedIndustry(null)}
             >
-              {getSelectedIndustryName()}
+              {industries.find(i => i.id === selectedIndustry)?.name}
               <X className="h-3 w-3 ml-1" />
             </Badge>
           )}
@@ -255,7 +174,7 @@ const JobFilters = ({
               className="filter-badge-selected cursor-pointer"
               onClick={() => setSelectedLocation(null)}
             >
-              {getSelectedLocationName()}
+              {locations.find(l => l.id === selectedLocation)?.city}
               <X className="h-3 w-3 ml-1" />
             </Badge>
           )}
