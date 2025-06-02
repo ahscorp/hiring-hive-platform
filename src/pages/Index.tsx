@@ -68,6 +68,8 @@ const Index = () => {
   const [selectedExperience, setSelectedExperience] = useState<string | null>(null);
   const [selectedSalary, setSelectedSalary] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filterDropdownLocations, setFilterDropdownLocations] = useState<Location[]>([]);
+  const [filterDropdownIndustries, setFilterDropdownIndustries] = useState<Industry[]>([]);
   
   // States for job list
   const [allJobs, setAllJobs] = useState<Job[]>([]);
@@ -125,19 +127,26 @@ const Index = () => {
       console.log("Applying filters to jobs:", allJobs);
       let result = [...allJobs];
       
-      if (selectedIndustry) {
-        result = result.filter(job => job.industry && job.industry.name.toLowerCase().includes(selectedIndustry.toLowerCase()));
+      if (selectedIndustry && filterDropdownIndustries.length > 0) {
+        const industryDetails = filterDropdownIndustries.find(ind => ind.id === selectedIndustry);
+        if (industryDetails) {
+          result = result.filter(job => job.industry && job.industry.name.toLowerCase() === industryDetails.name.toLowerCase());
+        }
       }
       
-      if (selectedLocation) {
-        result = result.filter(job => job.location && 
-          (job.location.city.toLowerCase().includes(selectedLocation.toLowerCase()) ||
-           job.location.state.toLowerCase().includes(selectedLocation.toLowerCase()))
-        );
+      if (selectedLocation && filterDropdownLocations.length > 0) {
+        const locationDetails = filterDropdownLocations.find(loc => loc.id === selectedLocation);
+        if (locationDetails) {
+          result = result.filter(job => 
+            job.location && 
+            job.location.city.toLowerCase() === locationDetails.city.toLowerCase() &&
+            (job.location.state?.toLowerCase() || '') === (locationDetails.state?.toLowerCase() || '')
+          );
+        }
       }
       
       if (selectedExperience) {
-        result = result.filter(job => job.experience && job.experience.range.toLowerCase().includes(selectedExperience.toLowerCase()));
+        result = result.filter(job => job.experience && job.experience.id === selectedExperience);
       }
       
       if (selectedSalary) {
@@ -160,7 +169,7 @@ const Index = () => {
     };
     
     applyFilters(); 
-  }, [selectedIndustry, selectedLocation, selectedExperience, selectedSalary, searchQuery, allJobs]);
+  }, [selectedIndustry, selectedLocation, selectedExperience, selectedSalary, searchQuery, allJobs, filterDropdownLocations, filterDropdownIndustries]);
 
   const handleApply = (jobId: string) => {
     const jobToApply = allJobs.find(job => job.id === jobId);
@@ -196,6 +205,8 @@ const Index = () => {
           setSelectedSalary={setSelectedSalary}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          onLocationsFetched={setFilterDropdownLocations}
+          onIndustriesFetched={setFilterDropdownIndustries}
         />
         
         <JobList 

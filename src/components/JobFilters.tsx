@@ -39,6 +39,8 @@ interface JobFiltersProps {
   setSelectedSalary: (salary: string | null) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  onLocationsFetched?: (locations: Location[]) => void;
+  onIndustriesFetched?: (industries: Industry[]) => void;
 }
 
 const JobFilters = ({
@@ -52,6 +54,8 @@ const JobFilters = ({
   setSelectedSalary,
   searchQuery,
   setSearchQuery,
+  onLocationsFetched,
+  onIndustriesFetched,
 }: JobFiltersProps) => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [industries, setIndustries] = useState<Industry[]>([]);
@@ -75,6 +79,9 @@ const JobFilters = ({
             state: location.state
           }));
           setLocations(mappedLocations);
+          if (onLocationsFetched) {
+            onLocationsFetched(mappedLocations);
+          }
         }
       } catch (err) {
         console.error('Exception fetching locations:', err);
@@ -98,6 +105,9 @@ const JobFilters = ({
             name: industry.name
           }));
           setIndustries(mappedIndustries);
+          if (onIndustriesFetched) {
+            onIndustriesFetched(mappedIndustries);
+          }
         }
       } catch (err) {
         console.error('Exception fetching industries:', err);
