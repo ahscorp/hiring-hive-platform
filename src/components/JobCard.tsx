@@ -45,7 +45,7 @@ const JobCard = ({ job, onApply }: JobCardProps) => {
             <User className="h-3 w-3 mr-1" />
             {job.experience.range}
           </div>
-          {job.gender && (
+          {job.gender && job.gender !== 'any' && (
             <div className="flex items-center">
               <Users className="h-3 w-3 mr-1" />
               {job.gender.charAt(0).toUpperCase() + job.gender.slice(1)}
@@ -68,9 +68,9 @@ const JobCard = ({ job, onApply }: JobCardProps) => {
           )}
         </div>
         
-        {job.salaryRange && (
+        {job.ctc && (
           <div className="text-xs font-medium text-gray-700 mb-2">
-            {job.salaryRange.range}
+            CTC: {job.ctc}
           </div>
         )}
       </div>

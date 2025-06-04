@@ -63,11 +63,11 @@ const JobDetailsDialog = ({ job, isOpen, onClose }: JobDetailsDialogProps) => {
           </div>
         </div>
 
-        {job.salaryRange && (
+        {job.ctc && (
           <div className="bg-hragency-lightBlue/20 p-3 rounded-md mb-4">
-            <div className="font-medium text-sm">Salary Range</div>
+            <div className="font-medium text-sm">CTC</div>
             <div className="text-hragency-blue font-medium">
-              {job.salaryRange.range}
+              {job.ctc}
             </div>
           </div>
         )}
@@ -76,17 +76,6 @@ const JobDetailsDialog = ({ job, isOpen, onClose }: JobDetailsDialogProps) => {
           <div>
             <h3 className="font-medium mb-2">Description</h3>
             <p className="text-sm text-gray-700">{job.description}</p>
-          </div>
-
-          <div>
-            <h3 className="font-medium mb-2">Key Responsibilities</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              {job.responsibilities.map((responsibility, index) => (
-                <li key={index} className="text-sm text-gray-700">
-                  {responsibility}
-                </li>
-              ))}
-            </ul>
           </div>
 
           <div>

@@ -46,7 +46,7 @@ const formSchema = z.object({
     message: "Key skills must be at least 10 characters.",
   }),
   ctc: z.string().optional(),
-  gender: z.enum(["male", "female", "any"]).optional(),
+  gender: z.enum(["any", "male", "female"]).optional(),
   status: z.boolean().default(false),
 });
 
@@ -97,8 +97,8 @@ const AdminJobEdit: React.FC = () => {
       form.setValue('ctc', jobData.ctc || '');
       
       // Handle gender field with proper type checking
-      if (jobData.gender && ['male', 'female', 'any'].includes(jobData.gender)) {
-        form.setValue('gender', jobData.gender as "male" | "female" | "any");
+      if (jobData.gender && ['any', 'male', 'female'].includes(jobData.gender)) {
+        form.setValue('gender', jobData.gender as "any" | "male" | "female");
       } else {
         form.setValue('gender', undefined);
       }

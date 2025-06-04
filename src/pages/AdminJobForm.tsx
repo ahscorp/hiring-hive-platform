@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
@@ -47,7 +46,7 @@ const formSchema = z.object({
     message: "Key skills must be at least 10 characters.",
   }),
   ctc: z.string().optional(),
-  gender: z.enum(["male", "female", "any"]).optional(),
+  gender: z.enum(["any", "male", "female"]).optional(),
   status: z.boolean().default(false),
 });
 
