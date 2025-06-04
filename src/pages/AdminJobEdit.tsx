@@ -95,7 +95,13 @@ const AdminJobEdit: React.FC = () => {
       form.setValue('industry', jobData.industry || '');
       form.setValue('description', jobData.description);
       form.setValue('ctc', jobData.ctc || '');
-      form.setValue('gender', jobData.gender || undefined);
+      
+      // Handle gender field with proper type checking
+      if (jobData.gender && ['male', 'female', 'any'].includes(jobData.gender)) {
+        form.setValue('gender', jobData.gender as "male" | "female" | "any");
+      } else {
+        form.setValue('gender', undefined);
+      }
       
       // Convert key skills array to string for textarea
       if (Array.isArray(jobData.keyskills)) {
