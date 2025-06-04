@@ -1,9 +1,4 @@
 
-export interface Industry {
-  id: string;
-  name: string;
-}
-
 export interface Location {
   id: string;
   city: string;
@@ -15,6 +10,11 @@ export interface Experience {
   range: string;
   minYears: number;
   maxYears: number | null;
+}
+
+export interface Industry {
+  id: string;
+  name: string;
 }
 
 export interface SalaryRange {
@@ -38,22 +38,5 @@ export interface Job {
   status: 'Published' | 'Draft';
   datePosted: string;
   ctc?: string | null;
-}
-
-export interface ApplicationForm {
-  fullName: string;
-  email: string;
-  phone: string;
-  yearsOfExperience: string;
-  currentCompany: string;
-  currentDesignation: string;
-  currentCTC: string;
-  currentTakeHome: string;
-  expectedCTC: string;
-  noticePeriod: string;
-  location: string;
-  department: string;
-  otherDepartment: string;
-  resume: File | null;
-  jobId: string;
+  gender?: 'male' | 'female' | 'any' | null;
 }

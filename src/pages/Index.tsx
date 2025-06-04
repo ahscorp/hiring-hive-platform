@@ -16,7 +16,7 @@ type SupabaseJobRow = Tables<'jobs'>;
 const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
   // Create location object from string
   const locationText = supabaseJob.location || 'Not Specified';
-  const locationParts = locationText.includes(',') ? locationText.split(',') : ['Not Specified', ''];
+  const locationParts = locationText.includes(',') ? locationText.split(',') : [locationText, ''];
   const defaultLocation: Location = { 
     id: locationText.toLowerCase().replace(/[^a-z0-9]/g, '_'), 
     city: locationParts[0].trim(), 
@@ -57,6 +57,7 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
     status: supabaseJob.status as ('Published' | 'Draft'),
     datePosted: supabaseJob.dateposted || new Date().toISOString(),
     ctc: supabaseJob.ctc || null,
+    gender: supabaseJob.gender as ('male' | 'female' | 'any') || null,
   };
 };
 
@@ -157,11 +158,8 @@ const Index = () => {
 
       if (selectedGender) {
         result = result.filter(job => {
-          // Find the original job data from Supabase to get the gender field
-          const originalJobData = allJobs.find(j => j.id === job.id);
-          // If job has no gender preference or gender is "any", it should show for all filters
-          // If job has specific gender preference, only show when filter matches or filter is "any"
-          const jobGender = (originalJobData as any)?.gender;
+          // Use the gender field directly from the mapped job
+          const jobGender = job.gender;
           if (!jobGender || jobGender === 'any') return true;
           return jobGender === selectedGender;
         });

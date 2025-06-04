@@ -21,52 +21,50 @@ type SupabaseJobRow = Tables<'jobs'>;
 // Type for an application from Supabase
 type Application = Tables<'applications'>;
 
-// Mapping function from SupabaseJobRow to our application's Job type (similar to Index.tsx)
+// Mapping function from SupabaseJobRow to our application's Job type - simplified for admin view
 const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
-  const safeGetTypedObject = <T extends { id: string }>(
-    jsonValue: Json | undefined | null,
-    defaultValue: T
-  ): T => {
-    if (
-      typeof jsonValue === 'object' &&
-      jsonValue !== null &&
-      'id' in jsonValue &&
-      typeof (jsonValue as { id?: unknown }).id === 'string'
-    ) {
-      return jsonValue as T;
-    }
-    return defaultValue;
+  // Create location object from string - use actual values
+  const locationText = supabaseJob.location || '';
+  const locationParts = locationText.includes(',') ? locationText.split(',') : [locationText, ''];
+  const defaultLocation: Location = { 
+    id: locationText.toLowerCase().replace(/[^a-z0-9]/g, '_'), 
+    city: locationParts[0].trim() || 'Not Specified', 
+    state: locationParts[1]?.trim() || '' 
   };
-  const safeGetSalaryRange = (jsonValue: Json | undefined | null): SalaryRange | null => {
-    if (typeof jsonValue === 'object' && jsonValue !== null && !Array.isArray(jsonValue)) {
-      const obj = jsonValue as { [key: string]: Json | undefined };
-      const id = obj.id; const range = obj.range; const min = obj.min;
-      if (typeof id === 'string' && typeof range === 'string' && typeof min === 'number' && ('max' in obj && (typeof obj.max === 'number' || obj.max === null))) {
-        return { id: id, range: range, min: min, max: obj.max as number | null };
-      }
-    }
-    return null;
+
+  // Create experience object from string - use actual values
+  const experienceText = supabaseJob.experience || '';
+  const defaultExperience: Experience = { 
+    id: experienceText.toLowerCase().replace(/[^a-z0-9]/g, '_'), 
+    range: experienceText || 'Not Specified', 
+    minYears: 0, 
+    maxYears: null 
   };
-  const defaultLocation: Location = { id: 'unknown_loc', city: 'Not Specified', state: '' };
-  const defaultExperience: Experience = { id: 'unknown_exp', range: 'Not Specified', minYears: 0, maxYears: null };
-  const defaultIndustry: Industry = { id: 'unknown_ind', name: 'Not Specified' };
+
+  // Create industry object from string - use actual values
+  const industryText = supabaseJob.industry || '';
+  const defaultIndustry: Industry = { 
+    id: industryText.toLowerCase().replace(/[^a-z0-9]/g, '_'), 
+    name: industryText || 'Not Specified'
+  };
 
   return {
     id: supabaseJob.id,
-    title: supabaseJob.position, // Map position to title
-    location: safeGetTypedObject<Location>(supabaseJob.location, defaultLocation),
-    experience: safeGetTypedObject<Experience>(supabaseJob.experience, defaultExperience),
-    industry: safeGetTypedObject<Industry>(supabaseJob.industry, defaultIndustry),
-    department: supabaseJob.jobId || '', // Use jobId as department
+    title: supabaseJob.position,
+    location: defaultLocation,
+    experience: defaultExperience,
+    industry: defaultIndustry,
+    department: supabaseJob.jobId || '',
     keySkills: supabaseJob.keyskills || [],
     description: supabaseJob.description,
-    responsibilities: supabaseJob.keyskills || [], // Use keyskills as responsibilities temporarily  
-    salaryRange: safeGetSalaryRange(supabaseJob.location), // Use location as salaryRange temporarily
+    responsibilities: supabaseJob.keyskills || [],
+    salaryRange: null,
     status: supabaseJob.status as ('Published' | 'Draft'),
     datePosted: supabaseJob.dateposted || new Date().toISOString(),
+    ctc: supabaseJob.ctc || null,
+    gender: supabaseJob.gender as ('male' | 'female' | 'any') || null,
   };
 };
-
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -276,7 +274,7 @@ const Admin = () => {
                           <div className="grid grid-cols-5 w-full text-left">
                             <div className="truncate">{job.department || 'N/A'}</div>
                             <div className="truncate">{job.title}</div>
-                            <div className="truncate">{job.location.city}, {job.location.state}</div>
+                            <div className="truncate">{job.location.city}{job.location.state ? `, ${job.location.state}` : ''}</div>
                             <div>{new Date(job.datePosted).toLocaleDateString()}</div>
                             <div>
                               <Badge 

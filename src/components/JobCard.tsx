@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Job } from "@/data/jobTypes";
-import { ArrowRight, Briefcase, Calendar, MapPin, User } from "lucide-react";
+import { ArrowRight, Briefcase, Calendar, MapPin, User, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import JobDetailsDialog from "./JobDetailsDialog";
 
@@ -45,6 +45,12 @@ const JobCard = ({ job, onApply }: JobCardProps) => {
             <User className="h-3 w-3 mr-1" />
             {job.experience.range}
           </div>
+          {job.gender && (
+            <div className="flex items-center">
+              <Users className="h-3 w-3 mr-1" />
+              {job.gender.charAt(0).toUpperCase() + job.gender.slice(1)}
+            </div>
+          )}
           <div className="flex items-center">
             <Calendar className="h-3 w-3 mr-1" />
             {formatDate(job.datePosted)}
