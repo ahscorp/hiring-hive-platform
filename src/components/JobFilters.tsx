@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -244,7 +243,6 @@ const JobFilters = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any-gender">Any Gender</SelectItem>
-              <SelectItem value="any">Any</SelectItem>
               <SelectItem value="male">Male</SelectItem>
               <SelectItem value="female">Female</SelectItem>
             </SelectContent>
