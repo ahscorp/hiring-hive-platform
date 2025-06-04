@@ -24,6 +24,24 @@ export interface SalaryRange {
   max: number | null;
 }
 
+export interface ApplicationForm {
+  fullName: string;
+  email: string;
+  phone: string;
+  yearsOfExperience: string;
+  currentCompany: string;
+  currentDesignation: string;
+  currentCTC: string;
+  currentTakeHome: string;
+  expectedCTC: string;
+  noticePeriod: string;
+  location: string;
+  department: string;
+  otherDepartment: string;
+  resume: File | null;
+  jobId: string;
+}
+
 export interface Job {
   id: string;
   title: string;
