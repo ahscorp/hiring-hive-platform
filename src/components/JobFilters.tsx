@@ -37,6 +37,8 @@ interface JobFiltersProps {
   setSelectedExperience: (experience: string | null) => void;
   selectedSalary: string | null;
   setSelectedSalary: (salary: string | null) => void;
+  selectedGender: string | null;
+  setSelectedGender: (gender: string | null) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onLocationsFetched?: (locations: Location[]) => void;
@@ -52,6 +54,8 @@ const JobFilters = ({
   setSelectedExperience,
   selectedSalary,
   setSelectedSalary,
+  selectedGender,
+  setSelectedGender,
   searchQuery,
   setSearchQuery,
   onLocationsFetched,
@@ -125,6 +129,7 @@ const JobFilters = ({
     setSelectedLocation(null);
     setSelectedExperience(null);
     setSelectedSalary(null);
+    setSelectedGender(null);
     setSearchQuery("");
   };
 
@@ -145,7 +150,7 @@ const JobFilters = ({
         <p className="text-gray-600">Use the filters below to find the right opportunity.</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
         <div className="space-y-2">
           <Label htmlFor="industry-filter">Industry</Label>
           <Select 
@@ -227,6 +232,24 @@ const JobFilters = ({
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="gender-filter">Gender</Label>
+          <Select 
+            value={selectedGender || ""} 
+            onValueChange={(value) => setSelectedGender(value === "any-gender" ? null : value)}
+          >
+            <SelectTrigger id="gender-filter">
+              <SelectValue placeholder="Any Gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any-gender">Any Gender</SelectItem>
+              <SelectItem value="any">Any</SelectItem>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       <div className="flex items-center gap-4 mt-6">
@@ -249,7 +272,7 @@ const JobFilters = ({
       </div>
 
       {/* Active filters */}
-      {(selectedIndustry || selectedLocation || selectedExperience || selectedSalary) && (
+      {(selectedIndustry || selectedLocation || selectedExperience || selectedSalary || selectedGender) && (
         <div className="mt-4 flex flex-wrap gap-2">
           {selectedIndustry && (
             <Badge 
@@ -284,6 +307,15 @@ const JobFilters = ({
               onClick={() => setSelectedSalary(null)}
             >
               {salaryRanges.find(s => s.id === selectedSalary)?.range}
+              <X className="h-3 w-3 ml-1" />
+            </Badge>
+          )}
+          {selectedGender && (
+            <Badge 
+              className="filter-badge-selected cursor-pointer"
+              onClick={() => setSelectedGender(null)}
+            >
+              {selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1)}
               <X className="h-3 w-3 ml-1" />
             </Badge>
           )}

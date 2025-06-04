@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Tables } from "@/integrations/supabase/types"; 
@@ -67,6 +66,7 @@ const Index = () => {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedExperience, setSelectedExperience] = useState<string | null>(null);
   const [selectedSalary, setSelectedSalary] = useState<string | null>(null);
+  const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterDropdownLocations, setFilterDropdownLocations] = useState<Location[]>([]);
   const [filterDropdownIndustries, setFilterDropdownIndustries] = useState<Industry[]>([]);
@@ -154,6 +154,18 @@ const Index = () => {
           job.salaryRange && job.salaryRange.id === selectedSalary
         );
       }
+
+      if (selectedGender) {
+        result = result.filter(job => {
+          // Find the original job data from Supabase to get the gender field
+          const originalJobData = allJobs.find(j => j.id === job.id);
+          // If job has no gender preference or gender is "any", it should show for all filters
+          // If job has specific gender preference, only show when filter matches or filter is "any"
+          const jobGender = (originalJobData as any)?.gender;
+          if (!jobGender || jobGender === 'any') return true;
+          return jobGender === selectedGender;
+        });
+      }
       
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -169,7 +181,7 @@ const Index = () => {
     };
     
     applyFilters(); 
-  }, [selectedIndustry, selectedLocation, selectedExperience, selectedSalary, searchQuery, allJobs, filterDropdownLocations, filterDropdownIndustries]);
+  }, [selectedIndustry, selectedLocation, selectedExperience, selectedSalary, selectedGender, searchQuery, allJobs, filterDropdownLocations, filterDropdownIndustries]);
 
   const handleApply = (jobId: string) => {
     const jobToApply = allJobs.find(job => job.id === jobId);
@@ -203,6 +215,8 @@ const Index = () => {
           setSelectedExperience={setSelectedExperience}
           selectedSalary={selectedSalary}
           setSelectedSalary={setSelectedSalary}
+          selectedGender={selectedGender}
+          setSelectedGender={setSelectedGender}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onLocationsFetched={setFilterDropdownLocations}

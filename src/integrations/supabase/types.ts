@@ -104,6 +104,7 @@ export type Database = {
           dateposted: string | null
           description: string
           experience: string
+          gender: string | null
           id: string
           industry: string
           jobId: string | null
@@ -118,6 +119,7 @@ export type Database = {
           dateposted?: string | null
           description: string
           experience: string
+          gender?: string | null
           id?: string
           industry: string
           jobId?: string | null
@@ -132,6 +134,7 @@ export type Database = {
           dateposted?: string | null
           description?: string
           experience?: string
+          gender?: string | null
           id?: string
           industry?: string
           jobId?: string | null

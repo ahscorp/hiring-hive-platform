@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
@@ -46,7 +47,7 @@ const formSchema = z.object({
     message: "Key skills must be at least 10 characters.",
   }),
   ctc: z.string().optional(),
-  gender: z.enum(["male", "female"]).optional(),
+  gender: z.enum(["male", "female", "any"]).optional(),
   status: z.boolean().default(false),
 });
 
@@ -329,6 +330,7 @@ const AdminJobForm: React.FC = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="any">Any</SelectItem>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
                     </SelectContent>
