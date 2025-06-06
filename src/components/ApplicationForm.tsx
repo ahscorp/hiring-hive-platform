@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Dialog, 
@@ -131,10 +130,11 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Validate required fields
+    // Updated validation for ALL required fields (making all mandatory)
     const requiredFields = [
       'fullName', 'email', 'phone', 'yearsOfExperience', 
-      'currentCompany', 'expectedCTC', 'noticePeriod', 'location', 'department'
+      'currentCompany', 'currentDesignation', 'currentCTC', 'currentTakeHome',
+      'expectedCTC', 'noticePeriod', 'location', 'department'
     ] as const;
     
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -372,6 +372,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                   value={formData.fullName}
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -383,6 +384,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Enter your email"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -393,6 +395,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="Enter your phone number"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -403,6 +406,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                   value={formData.location}
                   onChange={handleInputChange}
                   placeholder="City, State"
+                  required
                 />
               </div>
             </div>
@@ -419,6 +423,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                   value={formData.yearsOfExperience}
                   onChange={handleInputChange}
                   placeholder="e.g. 3.5"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -429,46 +434,51 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                   value={formData.currentCompany}
                   onChange={handleInputChange}
                   placeholder="Enter your current company"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="currentDesignation">Current Designation</Label>
+                <Label htmlFor="currentDesignation">Current Designation <span className="text-red-500">*</span></Label>
                 <Input
                   id="currentDesignation"
                   name="currentDesignation"
                   value={formData.currentDesignation}
                   onChange={handleInputChange}
                   placeholder="Enter your current role"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="noticePeriod">Notice Period (in days)</Label>
+                <Label htmlFor="noticePeriod">Notice Period (in days) <span className="text-red-500">*</span></Label>
                 <Input
                   id="noticePeriod"
                   name="noticePeriod"
                   value={formData.noticePeriod}
                   onChange={handleInputChange}
                   placeholder="e.g. 30"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="currentCTC">Current CTC (per annum)</Label>
+                <Label htmlFor="currentCTC">Current CTC (per annum) <span className="text-red-500">*</span></Label>
                 <Input
                   id="currentCTC"
                   name="currentCTC"
                   value={formData.currentCTC}
                   onChange={handleInputChange}
                   placeholder="e.g. 10 LPA"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="currentTakeHome">Current Take Home (per month)</Label>
+                <Label htmlFor="currentTakeHome">Current Take Home (per month) <span className="text-red-500">*</span></Label>
                 <Input
                   id="currentTakeHome"
                   name="currentTakeHome"
                   value={formData.currentTakeHome}
                   onChange={handleInputChange}
                   placeholder="Enter amount"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -479,6 +489,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                   value={formData.expectedCTC}
                   onChange={handleInputChange}
                   placeholder="e.g. 15 LPA"
+                  required
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -486,6 +497,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                 <Select 
                   value={formData.department}
                   onValueChange={(value) => handleSelectChange("department", value)}
+                  required
                 >
                   <SelectTrigger id="department">
                     <SelectValue placeholder="Select department" />
@@ -509,6 +521,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
                     value={formData.otherDepartment}
                     onChange={handleInputChange}
                     placeholder="Enter department name"
+                    required
                   />
                 </div>
               )}

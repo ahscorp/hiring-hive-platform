@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -74,7 +75,7 @@ const JobDetailsDialog = ({ job, isOpen, onClose }: JobDetailsDialogProps) => {
         <div className="space-y-4">
           <div>
             <h3 className="font-medium mb-2">Description</h3>
-            <p className="text-sm text-gray-700">{job.description}</p>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">{job.description}</div>
           </div>
 
           <div>

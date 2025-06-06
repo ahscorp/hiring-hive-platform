@@ -33,8 +33,8 @@ const formSchema = z.object({
   location: z.string().min(2, {
     message: "Location must be at least 2 characters.",
   }),
-  experience: z.string().min(2, {
-    message: "Please select an experience range.",
+  experience: z.string().min(1, {
+    message: "Experience is required.",
   }),
   industry: z.string().min(2, {
     message: "Industry must be at least 2 characters.",
@@ -248,18 +248,9 @@ const AdminJobForm: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Experience</FormLabel>
-                  <Select onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select experience range" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {experienceRanges.map((experience) => (
-                        <SelectItem key={experience.id} value={experience.range}>{experience.range}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder="e.g., 2-4 years, 5+ years, Fresher" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
