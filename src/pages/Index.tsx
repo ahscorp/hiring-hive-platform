@@ -49,7 +49,7 @@ const mapSupabaseJobToAppJob = (supabaseJob: SupabaseJobRow): Job => {
     location: defaultLocation,
     experience: defaultExperience,
     industry: defaultIndustry,
-    department: supabaseJob.jobId || '',
+    department: supabaseJob.department || 'Not Specified',
     keySkills: supabaseJob.keyskills || [],
     description: supabaseJob.description,
     responsibilities: supabaseJob.keyskills || [],
