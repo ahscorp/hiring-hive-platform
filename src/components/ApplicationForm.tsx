@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Dialog, 
@@ -210,21 +211,21 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
         'Contact Number': formData.phone,
         'Years Of Experience': formData.yearsOfExperience,
         'Current Company Name': formData.currentCompany,
-        'Current Designation': formData.currentDesignation || '',
-        'Current CTC (per annum)': formData.currentCTC || '',
-        'Current Take Home Salary (per month)': formData.currentTakeHome || '',
+        'Current Designation': formData.currentDesignation,
+        'Current CTC (per annum)': formData.currentCTC,
+        'Current Take Home Salary (per month)': formData.currentTakeHome,
         'Expected CTC (per annum)': formData.expectedCTC,
-        'What is your notice period ?(in days)': formData.noticePeriod || '',
+        'What is your notice period ?(in days)': formData.noticePeriod,
         'What is your current location ?': formData.location,
         'In which department are you searching for job ?': formData.department,
-        'Other': formData.department === "Other" ? formData.otherDepartment || '' : '',
+        'Other': formData.department === "Other" ? formData.otherDepartment : '',
         'Upload Resume': uploadedResumeUrl,
         'job_id': job?.id || '',
         'job_title': job?.title || '',
         'Date': new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         'Time': new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(),
         'Page URL': window.location.href,
-        'form_name': 'Job Application Form'|| ''
+        'form_name': 'Job Application Form'
       };
 
       const urlEncodedData = Object.keys(webhookPayload)
@@ -298,11 +299,11 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
           phone: formData.phone,
           yearsofexperience: formData.yearsOfExperience,
           currentcompany: formData.currentCompany,
-          currentdesignation: formData.currentDesignation || null,
-          currentctc: formData.currentCTC || null,
-          currenttakehome: formData.currentTakeHome || null,
+          currentdesignation: formData.currentDesignation,
+          currentctc: formData.currentCTC,
+          currenttakehome: formData.currentTakeHome,
           expectedctc: formData.expectedCTC,
-          noticeperiod: formData.noticePeriod || null,
+          noticeperiod: formData.noticePeriod,
           location: formData.location,
           department: formData.department,
           otherdepartment: formData.department === "Other" ? formData.otherDepartment : null,
