@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Tables } from "@/integrations/supabase/types"; 
@@ -9,6 +8,7 @@ import ApplicationForm from "@/components/ApplicationForm";
 import { experienceRanges, salaryRanges } from "@/data/mockData"; 
 import JobBoardHeader from "@/components/JobBoardHeader";
 import { toast } from '@/hooks/use-toast';
+import { Button } from "@/components/ui/button";
 
 // Type for a job row directly from Supabase
 type SupabaseJobRow = Tables<'jobs'>;
@@ -82,6 +82,10 @@ const Index = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobForForm, setSelectedJobForForm] = useState<Job | null>(null);
+
+  // States for generic profile form
+  const [isGenericFormOpen, setIsGenericFormOpen] = useState<boolean>(false);
+  const [genericJob, setGenericJob] = useState<Job | null>(null);
 
   // Fetch jobs from Supabase on component mount
   useEffect(() => {
@@ -200,6 +204,34 @@ const Index = () => {
     setSelectedJobForForm(null);
   };
 
+  const handleGenericProfileSubmit = () => {
+    // Create a generic job object for the form
+    const genericJobData: Job = {
+      id: "AHS000",
+      title: "General Application",
+      location: { id: "any", city: "Any", state: "Any" },
+      experience: { id: "any", range: "Any", minYears: 0, maxYears: null },
+      industry: { id: "general", name: "General" },
+      department: "General",
+      keySkills: [],
+      description: "Submit your profile for future opportunities",
+      responsibilities: [],
+      salaryRange: null,
+      status: "Published",
+      datePosted: new Date().toISOString(),
+      ctc: null,
+      gender: null,
+    };
+    
+    setGenericJob(genericJobData);
+    setIsGenericFormOpen(true);
+  };
+
+  const closeGenericForm = () => {
+    setIsGenericFormOpen(false);
+    setGenericJob(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-5xl py-8 px-4">
@@ -228,11 +260,31 @@ const Index = () => {
           isLoading={isLoading}
         />
         
+        {/* Generic Profile Submission Section */}
+        <div className="mt-16 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-8 text-center">
+          <p className="text-lg text-gray-700 mb-6 max-w-4xl mx-auto">
+            If your profile doesn't match any of the current openings, simply share your details — we'll keep you in mind for future opportunities.
+          </p>
+          <Button 
+            onClick={handleGenericProfileSubmit}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md font-medium"
+          >
+            Submit Profile
+          </Button>
+        </div>
+        
         {/* Application Form Dialog */}
         <ApplicationForm 
           isOpen={isFormOpen} 
           onClose={closeForm}
           job={selectedJobForForm}
+        />
+        
+        {/* Generic Profile Form Dialog */}
+        <ApplicationForm 
+          isOpen={isGenericFormOpen} 
+          onClose={closeGenericForm}
+          job={genericJob}
         />
       </div>
     </div>
