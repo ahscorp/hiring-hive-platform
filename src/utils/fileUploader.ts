@@ -24,19 +24,39 @@ export const uploadResume = async (
       body: formData,
     });
 
-    // Handle potential JSON parsing errors (might get HTML error pages)
+    // Get response text first
+    const responseText = await response.text();
+    
+    // Check if response is OK
+    if (!response.ok) {
+      console.error('Upload failed with status:', response.status);
+      console.error('Response text:', responseText);
+      return { success: false, error: 'Server responded with an error' };
+    }
+
+    // Try to parse as JSON
     let data;
     try {
-      data = await response.json();
-    } catch (error) {
-      console.error('Failed to parse response:', await response.text());
-      return { success: false, error: 'Invalid server response' };
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse response as JSON:', responseText);
+      // If the response is HTML (PHP source code), it means the PHP file is not being executed
+      if (responseText.includes('<?php')) {
+        return { success: false, error: 'Server configuration error: PHP not executing' };
+      }
+      return { success: false, error: 'Invalid server response format' };
     }
 
     // Check for errors from server
-    if (!response.ok || data.error) {
-      console.error('Upload error:', data.error || 'Unknown error');
-      return { success: false, error: data.error || 'Failed to upload file' };
+    if (data.error) {
+      console.error('Upload error from server:', data.error);
+      return { success: false, error: data.error };
+    }
+
+    // Check if we got the expected success response
+    if (!data.success || !data.resume_url) {
+      console.error('Unexpected response format:', data);
+      return { success: false, error: 'Unexpected server response' };
     }
 
     // Return success with the file URL
