@@ -77,6 +77,9 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
   const { toast } = useToast();
   const [fileError, setFileError] = useState<string | null>(null);
 
+  // Check if this is a generic application
+  const isGenericApplication = job?.id === "AHS000";
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
@@ -225,7 +228,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
         'Date': new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         'Time': new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(),
         'Page URL': window.location.href,
-        'form_name': 'Job Application Form'
+        'form_name': isGenericApplication ? 'General Profile Submission' : 'Job Application Form'
       };
 
       const urlEncodedData = Object.keys(webhookPayload)
@@ -255,76 +258,113 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
         // Log and continue
       }
       
-      // STEP 3: Store application data in Supabase (using uploadedResumeUrl)
-      let actualJobUUID = null;
-      if (job?.id) {
-        console.log("ApplicationForm handleSubmit: job?.id before Supabase query:", job?.id);
-        const { data: jobData, error: jobFetchError } = await supabase
-          .from('jobs')
-          .select('id') 
-          .eq('jobId', job.id)
-          .single();
-
-        console.log("ApplicationForm handleSubmit: Supabase jobData:", jobData, "jobFetchError:", jobFetchError);
-        if (jobFetchError || !jobData) {
-          console.error('Error fetching job UUID from database:', jobFetchError);
+      // STEP 3: Store application data in Supabase
+      if (isGenericApplication) {
+        // Store in general_profiles table for generic applications
+        const { error: dbError } = await supabase
+          .from('general_profiles')
+          .insert({
+            fullname: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            yearsofexperience: formData.yearsOfExperience,
+            currentcompany: formData.currentCompany,
+            currentdesignation: formData.currentDesignation,
+            currentctc: formData.currentCTC,
+            currenttakehome: formData.currentTakeHome,
+            expectedctc: formData.expectedCTC,
+            noticeperiod: formData.noticePeriod,
+            location: formData.location,
+            department: formData.department,
+            otherdepartment: formData.department === "Other" ? formData.otherDepartment : null,
+            resume_url: uploadedResumeUrl,
+            processed: false
+          });
+          
+        if (dbError) {
+          console.error('Error saving general profile to database:', dbError);
           toast({
-            title: "System Error",
-            description: "Could not verify job details (UUID fetch failed). Please try again later.",
+            title: "Database Error",
+            description: "Failed to save your profile details. Please try again.",
             variant: "destructive",
           });
           setIsSubmitting(false);
           return;
         }
-        actualJobUUID = jobData.id;
-      }
+      } else {
+        // Store in applications table for specific job applications
+        let actualJobUUID = null;
+        if (job?.id) {
+          console.log("ApplicationForm handleSubmit: job?.id before Supabase query:", job?.id);
+          const { data: jobData, error: jobFetchError } = await supabase
+            .from('jobs')
+            .select('id') 
+            .eq('jobId', job.id)
+            .single();
 
-      console.log("ApplicationForm handleSubmit: actualJobUUID:", actualJobUUID);
-      if (!actualJobUUID) {
-        toast({
-          title: "Invalid Job ID",
-          description: "The job ID provided is not valid or could not be found.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
+          console.log("ApplicationForm handleSubmit: Supabase jobData:", jobData, "jobFetchError:", jobFetchError);
+          if (jobFetchError || !jobData) {
+            console.error('Error fetching job UUID from database:', jobFetchError);
+            toast({
+              title: "System Error",
+              description: "Could not verify job details (UUID fetch failed). Please try again later.",
+              variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+          }
+          actualJobUUID = jobData.id;
+        }
 
-      const { error: dbError } = await supabase
-        .from('applications')
-        .insert({
-          job_id: actualJobUUID,
-          fullname: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          yearsofexperience: formData.yearsOfExperience,
-          currentcompany: formData.currentCompany,
-          currentdesignation: formData.currentDesignation,
-          currentctc: formData.currentCTC,
-          currenttakehome: formData.currentTakeHome,
-          expectedctc: formData.expectedCTC,
-          noticeperiod: formData.noticePeriod,
-          location: formData.location,
-          department: formData.department,
-          otherdepartment: formData.department === "Other" ? formData.otherDepartment : null,
-          resume_url: uploadedResumeUrl,
-          processed: false
-        });
-        
-      if (dbError) {
-        console.error('Error saving application to database:', dbError);
-        toast({
-          title: "Database Error",
-          description: "Failed to save your application details. Please try again.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
+        console.log("ApplicationForm handleSubmit: actualJobUUID:", actualJobUUID);
+        if (!actualJobUUID) {
+          toast({
+            title: "Invalid Job ID",
+            description: "The job ID provided is not valid or could not be found.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        const { error: dbError } = await supabase
+          .from('applications')
+          .insert({
+            job_id: actualJobUUID,
+            fullname: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            yearsofexperience: formData.yearsOfExperience,
+            currentcompany: formData.currentCompany,
+            currentdesignation: formData.currentDesignation,
+            currentctc: formData.currentCTC,
+            currenttakehome: formData.currentTakeHome,
+            expectedctc: formData.expectedCTC,
+            noticeperiod: formData.noticePeriod,
+            location: formData.location,
+            department: formData.department,
+            otherdepartment: formData.department === "Other" ? formData.otherDepartment : null,
+            resume_url: uploadedResumeUrl,
+            processed: false
+          });
+          
+        if (dbError) {
+          console.error('Error saving application to database:', dbError);
+          toast({
+            title: "Database Error",
+            description: "Failed to save your application details. Please try again.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
       }
       
       toast({
-        title: "Application Submitted!",
-        description: "Thank you for your application. We'll be in touch soon.",
+        title: isGenericApplication ? "Profile Submitted!" : "Application Submitted!",
+        description: isGenericApplication 
+          ? "Thank you for submitting your profile. We'll contact you when suitable opportunities arise." 
+          : "Thank you for your application. We'll be in touch soon.",
       });
       
       // Reset form and close dialog
@@ -357,8 +397,12 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Apply for {job?.title}</DialogTitle>
-          <p className="text-sm text-muted-foreground mt-2">Job ID: {job?.id || 'N/A'}</p>
+          <DialogTitle>
+            {isGenericApplication ? "Submit Your Profile" : `Apply for ${job?.title}`}
+          </DialogTitle>
+          {!isGenericApplication && (
+            <p className="text-sm text-muted-foreground mt-2">Job ID: {job?.id || 'N/A'}</p>
+          )}
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
@@ -587,7 +631,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || !!fileError}>
-              {isSubmitting ? "Submitting..." : "Submit Application"}
+              {isSubmitting ? "Submitting..." : isGenericApplication ? "Submit Profile" : "Submit Application"}
             </Button>
           </DialogFooter>
         </form>
