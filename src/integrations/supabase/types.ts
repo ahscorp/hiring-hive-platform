@@ -80,6 +80,69 @@ export type Database = {
           },
         ]
       }
+      general_profiles: {
+        Row: {
+          created_at: string | null
+          currentcompany: string
+          currentctc: string | null
+          currentdesignation: string | null
+          currenttakehome: string | null
+          department: string
+          email: string
+          expectedctc: string
+          fullname: string
+          id: string
+          location: string
+          noticeperiod: string | null
+          otherdepartment: string | null
+          phone: string
+          processed: boolean | null
+          resume_url: string | null
+          updated_at: string | null
+          yearsofexperience: string
+        }
+        Insert: {
+          created_at?: string | null
+          currentcompany: string
+          currentctc?: string | null
+          currentdesignation?: string | null
+          currenttakehome?: string | null
+          department: string
+          email: string
+          expectedctc: string
+          fullname: string
+          id?: string
+          location: string
+          noticeperiod?: string | null
+          otherdepartment?: string | null
+          phone: string
+          processed?: boolean | null
+          resume_url?: string | null
+          updated_at?: string | null
+          yearsofexperience: string
+        }
+        Update: {
+          created_at?: string | null
+          currentcompany?: string
+          currentctc?: string | null
+          currentdesignation?: string | null
+          currenttakehome?: string | null
+          department?: string
+          email?: string
+          expectedctc?: string
+          fullname?: string
+          id?: string
+          location?: string
+          noticeperiod?: string | null
+          otherdepartment?: string | null
+          phone?: string
+          processed?: boolean | null
+          resume_url?: string | null
+          updated_at?: string | null
+          yearsofexperience?: string
+        }
+        Relationships: []
+      }
       industries: {
         Row: {
           created_at: string | null
