@@ -235,7 +235,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
         .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(webhookPayload[key]))
         .join('&');
       
-      const googleScriptUrl = "https://script.google.com/macros/s/AKfycbxcgspOAM8bn8cbQK7mSXPkiaSoWxhw93PSMIJwAofgU9nbG6HOm2K0Rk8C3A8G0aCJKA/exec";
+      const googleScriptUrl = "https://script.google.com/macros/s/AKfycbxcgspOAM8bn8cbQK7mSXPkiaSoWxhw93PSMIJwAofgU9nbG6HOm2K0Rk8C3A8G0aCJKA/exechttps://script.google.com/macros/s/AKfycbzac6YyvN-ZdkSkDdxb1LwTTvDwE577YC4HybYiaEXvYypEYJS9i0gXPOr6mZHbIk7Y/exec";
       
       try {
         const response = await fetch(googleScriptUrl, {
