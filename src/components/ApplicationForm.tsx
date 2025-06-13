@@ -174,7 +174,7 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
     setIsSubmitting(true);
     
     try {
-      // STEP 1: Upload resume to server via PHP script (this happens first)
+      // STEP 1: Upload resume to server via PHP script
       let uploadedResumeUrl = ""; 
       if (formData.resume) {
         console.log("ApplicationForm handleSubmit: job?.id before resume upload:", job?.id);
@@ -193,10 +193,15 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
           setIsSubmitting(false);
           return;
         }
-        // Construct absolute URL
-        const relativeResumeUrl = uploadResult.resume_url;
-        const pathSegment = relativeResumeUrl.startsWith('/') ? relativeResumeUrl.substring(1) : relativeResumeUrl;
-        uploadedResumeUrl = `${window.location.origin}/${pathSegment}`;
+        
+        // Use the uploaded file URL directly (it should already be the correct path)
+        uploadedResumeUrl = uploadResult.resume_url;
+        
+        // Convert to absolute URL if it's a relative path
+        if (!uploadedResumeUrl.startsWith('http')) {
+          const pathSegment = uploadedResumeUrl.startsWith('/') ? uploadedResumeUrl.substring(1) : uploadedResumeUrl;
+          uploadedResumeUrl = `${window.location.origin}/${pathSegment}`;
+        }
       } else {
         toast({
           title: "Resume Missing",
@@ -247,14 +252,12 @@ const ApplicationForm = ({ isOpen, onClose, job }: ApplicationFormProps) => {
         });
         console.log("Webhook submission response status:", response.status);
         if (!response.ok) {
-          console.error("Webhook submission to webhook.site failed. Status:", response.status);
-          const responseText = await response.text();
-          console.error("Webhook.site response text:", responseText);
+          console.error("Webhook submission failed. Status:", response.status);
         } else {
-          console.log("Webhook submission to webhook.site successful (URL-encoded)");
+          console.log("Webhook submission successful");
         }
       } catch (error) {
-        console.error("Webhook submission error to webhook.site (URL-encoded):", error);
+        console.error("Webhook submission error:", error);
         // Log and continue
       }
       
