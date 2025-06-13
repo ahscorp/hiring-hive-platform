@@ -1,7 +1,6 @@
 
 /**
- * Helper function to upload resume files to the server
- * Currently using mock response due to server PHP configuration issues
+ * Helper function to upload resume files to the server using the existing upload.php script
  */
 export const uploadResume = async (
   file: File,
@@ -9,27 +8,6 @@ export const uploadResume = async (
   fullName: string
 ): Promise<{ success: boolean; resume_url?: string; error?: string }> => {
   try {
-    // For now, we'll create a mock response since PHP is not executing on the server
-    // This allows the form to work while server configuration is being resolved
-    
-    console.log('Mock upload for file:', file.name, 'jobId:', jobId, 'fullName:', fullName);
-    
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Create a mock file URL (in production, this would be the actual uploaded file URL)
-    const mockResumeUrl = `uploads/resumes/${jobId}/${fullName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}.${file.name.split('.').pop()}`;
-    
-    // Return mock success response
-    return { 
-      success: true, 
-      resume_url: mockResumeUrl 
-    };
-    
-    /* 
-    // Original PHP upload code (commented out until server is configured)
-    // Uncomment this section once PHP is properly configured on your server
-    
     const formData = new FormData();
     formData.append('resume', file);
     formData.append('jobId', jobId);
@@ -38,16 +16,19 @@ export const uploadResume = async (
     const baseUrl = window.location.origin;
     const uploadUrl = `${baseUrl}/upload.php`;
 
+    console.log('Uploading to:', uploadUrl);
+
     const response = await fetch(uploadUrl, {
       method: 'POST',
       body: formData,
     });
 
     const responseText = await response.text();
+    console.log('Upload response status:', response.status);
+    console.log('Upload response text:', responseText);
     
     if (!response.ok) {
       console.error('Upload failed with status:', response.status);
-      console.error('Response text:', responseText);
       return { success: false, error: 'Server responded with an error' };
     }
 
@@ -72,8 +53,8 @@ export const uploadResume = async (
       return { success: false, error: 'Unexpected server response' };
     }
 
+    console.log('Upload successful, resume URL:', data.resume_url);
     return { success: true, resume_url: data.resume_url };
-    */
     
   } catch (error) {
     console.error('Resume upload error:', error);
