@@ -10,6 +10,7 @@ import JobBoardHeader from "@/components/JobBoardHeader";
 import Header from "@/components/Header";
 import { toast } from '@/hooks/use-toast';
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
 
 // Type for a job row directly from Supabase
 type SupabaseJobRow = Tables<'jobs'>;
@@ -289,6 +290,7 @@ const Index = () => {
           job={genericJob}
         />
       </div>
+      <Footer />
     </div>
   );
 };
