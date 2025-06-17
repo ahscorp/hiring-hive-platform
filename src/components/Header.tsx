@@ -53,9 +53,9 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center">
             <img 
-              src="/lovable-uploads/eebcc39a-b9ad-4247-9f99-bb579d3a32f2.png" 
+              src="/lovable-uploads/7a848fb6-9c19-4716-aec5-9a19f5fff7d2.png" 
               alt="AHS HR Solutions" 
-              className="h-10 w-auto"
+              className="h-12 w-auto"
             />
           </div>
 
@@ -82,12 +82,12 @@ const Header = () => {
                 Services
                 <ChevronDown className="ml-1 h-4 w-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-64 bg-white border shadow-lg z-50">
                 {serviceItems.map((service) => (
                   <DropdownMenuItem key={service.name} asChild>
                     <a
                       href={service.url}
-                      className="w-full px-3 py-2 text-sm text-gray-700 hover:text-[#09b1cc] hover:bg-gray-50 transition-colors"
+                      className="w-full px-3 py-2 text-sm text-gray-700 hover:text-[#09b1cc] hover:bg-gray-50 transition-colors block"
                     >
                       {service.name}
                     </a>
