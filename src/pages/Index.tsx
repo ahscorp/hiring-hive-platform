@@ -7,6 +7,7 @@ import JobList from "@/components/JobList";
 import ApplicationForm from "@/components/ApplicationForm";
 import { experienceRanges, salaryRanges } from "@/data/mockData"; 
 import JobBoardHeader from "@/components/JobBoardHeader";
+import Header from "@/components/Header";
 import { toast } from '@/hooks/use-toast';
 import { Button } from "@/components/ui/button";
 
@@ -234,6 +235,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="container mx-auto max-w-5xl py-8 px-4">
         <JobBoardHeader />
         
