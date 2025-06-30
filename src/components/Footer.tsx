@@ -28,8 +28,8 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[#3a4a6b] text-white">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="bg-[#272E59] text-white">
+      <div className="container mx-auto px-5 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description Section */}
           <div className="md:col-span-1">
@@ -106,8 +106,18 @@ const Footer = () => {
             </div>
             
             <div className="mb-6">
-              <p className="text-sm">info@ahscorp.in</p>
-              <p className="text-sm">+91 80550 68555</p>
+              <a 
+                href="mailto:info@ahscorp.in" 
+                className="text-sm hover:text-[#09b1cc] transition-colors block mb-1"
+              >
+                info@ahscorp.in
+              </a>
+              <a 
+                href="tel:+918055068555" 
+                className="text-sm hover:text-[#09b1cc] transition-colors"
+              >
+                +91 80550 68555
+              </a>
             </div>
 
             {/* Social Media Icons */}

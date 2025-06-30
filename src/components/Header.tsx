@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import {
 
 const Header = () => {
   const [activeMenu, setActiveMenu] = useState('Job Postings');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const serviceItems = [
     {
@@ -46,20 +47,26 @@ const Header = () => {
     { name: 'Contact Us', url: 'https://ahscorp.in/contact-us/' }
   ];
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   return (
     <header className="bg-white shadow-sm border-b">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-5">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <img 
-              src="/lovable-uploads/7a848fb6-9c19-4716-aec5-9a19f5fff7d2.png" 
-              alt="AHS HR Solutions" 
-              className="h-12 w-auto"
-            />
+            <a href="https://ahscorp.in/" target="_blank" rel="noopener noreferrer">
+              <img 
+                src="/lovable-uploads/7a848fb6-9c19-4716-aec5-9a19f5fff7d2.png" 
+                alt="AHS HR Solutions" 
+                className="h-12 w-auto"
+              />
+            </a>
           </div>
 
-          {/* Navigation Menu */}
+          {/* Desktop Navigation Menu */}
           <nav className="hidden md:flex items-center space-x-8">
             {menuItems.map((item) => (
               <a
@@ -99,13 +106,54 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <button className="text-gray-700 hover:text-[#09b1cc]">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+            <button 
+              onClick={toggleMobileMenu}
+              className="text-gray-700 hover:text-[#09b1cc] p-2"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t">
+            <nav className="py-4 space-y-2">
+              {menuItems.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.url}
+                  className={`block px-4 py-2 text-sm font-medium transition-colors hover:text-[#09b1cc] hover:bg-gray-50 ${
+                    item.isActive ? 'text-[#09b1cc] bg-gray-50' : 'text-gray-700'
+                  }`}
+                  onClick={() => {
+                    setActiveMenu(item.name);
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  {item.name}
+                </a>
+              ))}
+              
+              {/* Mobile Services Menu */}
+              <div className="px-4 py-2">
+                <div className="text-sm font-medium text-gray-700 mb-2">Services</div>
+                <div className="pl-4 space-y-2">
+                  {serviceItems.map((service) => (
+                    <a
+                      key={service.name}
+                      href={service.url}
+                      className="block py-1 text-sm text-gray-600 hover:text-[#09b1cc] transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {service.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
